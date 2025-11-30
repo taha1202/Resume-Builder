@@ -1,0 +1,34 @@
+﻿@page "/"
+@namespace ResumeBuilder.Pages
+@using ResumeBuilder
+@using ResumeBuilder.Components
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResumeCloud</title>
+    <base href="~/" />
+    <link href="app.css" rel="stylesheet" />
+    <link href="css/site.css" rel="stylesheet" />
+    <link href="app.css" rel="stylesheet" />
+    <link href="ResumeBuilder.styles.css" rel="stylesheet" />
+    <link href="bootstrap/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    <app>
+        <component type="typeof(App)" render-mode="ServerPrerendered" />
+    </app>
+    <script src="_framework/blazor.server.js"></script>
+    <script>
+        window.downloadFileFromBase64 = function (fileName, contentType, base64String) {
+            const linkSource = `data:${contentType};base64,${base64String}`;
+            const downloadLink = document.createElement('a');
+            downloadLink.href = linkSource;
+            downloadLink.download = fileName;
+            downloadLink.click();
+        };
+    </script>
+</body>
+</html>

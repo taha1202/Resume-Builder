@@ -1,0 +1,35 @@
+@* @inject AuthService AuthService
+@implements IDisposable
+
+@if (AuthService.IsAuthenticated)
+{
+    <div class="user-info">
+        <span>Hello, @AuthService.CurrentUser?.Name!</span>
+        <button @onclick="HandleLogout" class="btn-logout">Log out</button>
+    </div>
+}
+else
+{
+    <div class="auth-links">
+        <a href="/login" class="btn-login">Log in</a>
+        <a href="/signup" class="btn-signup">Sign up</a>
+    </div>
+}
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.InitializeAsync();
+        AuthService.OnAuthStateChanged += StateHasChanged;
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.Logout();
+    }
+
+    public void Dispose()
+    {
+        AuthService.OnAuthStateChanged -= StateHasChanged;
+    }
+} *@

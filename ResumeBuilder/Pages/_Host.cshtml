@@ -1,0 +1,72 @@
+@page "/"
+@namespace ResumeBuilder.Pages
+@using ResumeBuilder
+@using ResumeBuilder.Components
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResumeCloud</title>
+    <base href="~/" />
+    <!-- App CSS (wwwroot/app.css) with cache-busting -->
+    <link rel="stylesheet" href="~/app.css" asp-append-version="true" />
+    <link href="css/site.css" rel="stylesheet" />
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+</head>
+<body>
+    <app>
+        <component type="typeof(App)" render-mode="ServerPrerendered" />
+    </app>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+    <script>
+        window.quillInterop = {
+            init: function (elementId, dotnetHelper, initialValue) {
+                var toolbarOptions = [
+                    [{ 'header': [1, 2, 3, false] }], // Headings
+                    ['bold', 'italic', 'underline'],  // Formatting
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }], // Lists
+                    ['clean'] // Remove formatting
+                ];
+
+                var quill = new Quill('#' + elementId, {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: toolbarOptions
+                    },
+                    placeholder: 'Write details here...'
+                });
+
+                // Set initial content
+                if (initialValue) {
+                    quill.root.innerHTML = initialValue;
+                }
+
+                // Update Blazor when text changes
+                quill.on('text-change', function () {
+                    var html = quill.root.innerHTML;
+                    dotnetHelper.invokeMethodAsync('UpdateValue', html);
+                });
+            }
+        };
+    </script>
+    <script>
+        window.downloadFileFromBase64 = (fileName, contentType, base64Data) => {
+            try {
+                const link = document.createElement('a');
+                link.href = `data:${contentType};base64,${base64Data}`;
+                link.download = fileName || 'download';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (e) {
+                console.error('downloadFileFromBase64 error', e);
+            }
+        };
+    </script>
+
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>

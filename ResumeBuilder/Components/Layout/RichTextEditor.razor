@@ -1,0 +1,51 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="rich-text-editor-container">
+    <div id="@EditorId" style="height: 200px; background: white;">
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Value { get; set; } = "";
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    private string EditorId = "quill-" + Guid.NewGuid().ToString();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("quillInterop.init",
+                EditorId,
+                DotNetObjectReference.Create(this),
+                Value);
+        }
+    }
+
+    [JSInvokable]
+    public async Task UpdateValue(string html)
+    {
+        Value = html;
+        await ValueChanged.InvokeAsync(html);
+    }
+}
+
+<style>
+    .rich-text-editor-container .ql-toolbar {
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        border-color: #d1d5db;
+        background-color: #f9fafb;
+    }
+
+    .rich-text-editor-container .ql-container {
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+        border-color: #d1d5db;
+        font-family: inherit;
+        font-size: 0.95rem;
+    }
+</style>

@@ -1,0 +1,49 @@
+﻿@page "/"
+@layout EmptyLayout
+@inject AuthService AuthService
+
+<PageTitle>ResumeCloud - Build Your Professional Resume</PageTitle>
+
+<div class="landing-page">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="icon">📄</span>
+                <span class="brand-name">ResumeCloud</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                Build Your Professional Resume
+                <span class="hero-subtitle">in Minutes</span>
+            </h1>
+            <p class="hero-description">
+                Create, customize, and download professional resumes with our cloud-powered builder.
+                All your resumes stored securely in Azure.
+            </p>
+            <a href="/login" class="btn-hero cursor-pointer">Get Started Free</a>
+
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📋</div>
+                <h3>Professional Templates</h3>
+                <p>Choose from multiple professionally designed templates tailored for different industries.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">☁️</div>
+                <h3>Cloud Storage</h3>
+                <p>All resumes securely stored in Azure Blob Storage, accessible from anywhere.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⬇️</div>
+                <h3>Export to PDF</h3>
+                <p>Download your resume as a PDF with one click, ready for job applications.</p>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,97 @@
+﻿@page "/signup"
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@layout EmptyLayout
+
+
+<PageTitle>Sign Up - ResumeCloud</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="auth-icon">📄</div>
+            <h2>Create Account</h2>
+            <p>Start building your resume today</p>
+        </div>
+
+        <EditForm Model="@signupModel" OnValidSubmit="HandleSignup">
+            <div class="form-group">
+                <label>Full Name</label>
+                <InputText @bind-Value="signupModel.Name" class="form-control" placeholder="John Doe" />
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <InputText @bind-Value="signupModel.Email" class="form-control" placeholder="your@email.com" />
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <InputText type="password" @bind-Value="signupModel.Password" class="form-control" placeholder="••••••••" />
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <InputText type="password" @bind-Value="signupModel.ConfirmPassword" class="form-control" placeholder="••••••••" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="error-message">@errorMessage</div>
+            }
+
+            <button type="submit" class="btn-submit" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span>Creating account...</span>
+                }
+                else
+                {
+                    <span>Create Account</span>
+                }
+            </button>
+        </EditForm>
+
+        <p class="auth-footer">
+            Already have an account? <a href="/login">Login</a>
+        </p>
+
+        <a href="/" class="back-link">← Back to Home</a>
+    </div>
+</div>
+
+@code {
+    private SignupModel signupModel = new();
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    private async Task HandleSignup()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+
+        if (signupModel.Password != signupModel.ConfirmPassword)
+        {
+            errorMessage = "Passwords do not match";
+            isLoading = false;
+            return;
+        }
+
+        var success = await AuthService.Signup(
+            signupModel.Name,
+            signupModel.Email,
+            signupModel.Password
+        );
+
+        if (success)
+        {
+            Navigation.NavigateTo("/dashboard");
+        }
+        else
+        {
+            errorMessage = "Email already exists";
+        }
+
+        isLoading = false;
+    }
+}

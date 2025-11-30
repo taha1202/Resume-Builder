@@ -1,0 +1,22 @@
+# VS cache
+.vs/
+*.user
+*.suo
+
+# Build artifacts
+bin/
+obj/
+Debug/
+Release/
+
+# Azure publish profiles
+*.pubxml
+*.pubxml.user
+
+# Auto-generated settings
+appsettings.Development.json
+
+# Copilot AI stuff
+**/CopilotSnapshots/
+**/CopilotIndices/
+**/copilot-chat/

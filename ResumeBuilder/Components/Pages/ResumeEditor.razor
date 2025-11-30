@@ -1,0 +1,1125 @@
+﻿@page "/editor/{TemplateId:int}"
+@page "/editor/{TemplateId:int}/{ResumeId}"
+@layout EmptyLayout
+@inject ResumeService ResumeService
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@using System.Text.Json
+@using System.Text.RegularExpressions
+@using System.Linq
+@using ResumeBuilder.Components
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>Resume Editor - ResumeCloud</PageTitle>
+
+@if (isLoading)
+{
+    @* --- LOADING SCREEN --- *@
+    <div class="loader-wrapper">
+        <div class="spinner"></div>
+        <span class="loading-text">Loading editor...</span>
+    </div>
+}
+else
+{
+    @* --- MAIN EDITOR UI (Only shows when loaded) --- *@
+    <div class="editor-page-container @(isPreviewMode ? "preview-active" : "")">
+
+        @* --- HEADER SECTION --- *@
+        <div class="editor-top-header">
+            <div class="header-left">
+                <button class="btn-back" @onclick="GoBack">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
+                    <span>Templates</span>
+                </button>
+                <div class="header-divider"></div>
+                <h2>@selectedTemplate?.Name</h2>
+
+                @* --- SAVE STATUS INDICATOR --- *@
+                <span class="save-status">
+                    @if (isSaving)
+                    {
+                        <span class="status-saving">Saving...</span>
+                    }
+                    else if (!string.IsNullOrEmpty(lastSaveTime))
+                    {
+                        <span class="status-saved">Saved @lastSaveTime</span>
+                    }
+                </span>
+            </div>
+
+            <div class="header-right">
+                @* --- MANUAL SAVE BUTTON --- *@
+                <button class="btn-header btn-save" @onclick="() => SaveResume(false)" disabled="@isSaving">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
+                    <span>Save</span>
+                </button>
+
+                <button class="btn-header btn-preview" @onclick="TogglePreview">
+                    @if (isPreviewMode)
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                        <span>Edit</span>
+                    }
+                    else
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                        <span>Preview</span>
+                    }
+                </button>
+
+                <button class="btn-header btn-download" @onclick="DownloadPDF">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+                    <span>Download PDF</span>
+                </button>
+            </div>
+        </div>
+
+        @* --- MAIN CONTENT --- *@
+        <div class="editor-main-content">
+            <div class="editor-left-panel">
+                <div class="tab-navigation-container">
+                    <div class="tab-navigation-wrap">
+                        @foreach (var tab in new[] { "Personal", "Summary", "Education", "Experience", "Tech Skills", "Soft Skills", "Projects", "Certifications", "Academic", "Volunteer", "Activities" })
+                        {
+                            <button class="tab-btn @(activeTab == tab ? "active" : "")" @onclick='() => activeTab = tab'>@tab</button>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-content-area scrollable">
+                    @if (activeTab == "Personal")
+                    {
+                        <div class="form-section">
+                            <h3>Personal Information</h3>
+                            <div class="form-group"><label>Full Name *</label><input type="text" @bind="resume.FullName" class="form-control-styled" placeholder="John Doe" /></div>
+                            <div class="form-row">
+                                <div class="form-col"><div class="form-group"><label>Email *</label><input type="email" @bind="resume.Email" class="form-control-styled" placeholder="john@example.com" /></div></div>
+                                <div class="form-col"><div class="form-group"><label>Phone *</label><input type="tel" @bind="resume.Phone" class="form-control-styled" placeholder="0312..." /></div></div>
+                            </div>
+                            <div class="form-group"><label>Location *</label><input type="text" @bind="resume.Address" class="form-control-styled" placeholder="New York, NY" /></div>
+                            <div class="form-row">
+                                <div class="form-col"><div class="form-group"><label>LinkedIn</label><input type="text" @bind="resume.LinkedIn" class="form-control-styled" /></div></div>
+                                <div class="form-col"><div class="form-group"><label>Website</label><input type="text" @bind="resume.Website" class="form-control-styled" /></div></div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (activeTab == "Summary")
+                    {
+                        <div class="form-section"><h3>Professional Summary</h3><div class="form-group"><label>Summary</label><RichTextEditor @bind-Value="resume.Summary" /></div></div>
+                    }
+
+                    @if (activeTab == "Education")
+                    {
+                        <div class="form-section">
+                            <div class="section-header-row"><h3>Education</h3><button class="btn-add" @onclick="AddEducationEntry">+ Add Education</button></div>
+                            @foreach (var edu in EducationList)
+                            {
+                                <div class="entry-card">
+                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(edu.Institution) ? "New Education" : edu.Institution)</span><button class="btn-icon-delete" @onclick="() => RemoveEducation(edu)">🗑</button></div>
+                                    <div class="entry-card-body">
+                                        <div class="form-group"><label>Institution</label><input type="text" @bind="edu.Institution" class="form-control-styled" /></div>
+                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Degree</label><input type="text" @bind="edu.Degree" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Field of Study</label><input type="text" @bind="edu.FieldOfStudy" class="form-control-styled" /></div></div></div>
+                                        <div class="form-row three-col"><div class="form-col"><div class="form-group"><label>Start Date</label><input type="text" @bind="edu.StartDate" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>End Date</label><input type="text" @bind="edu.EndDate" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>GPA</label><input type="text" @bind="edu.GPA" class="form-control-styled" /></div></div></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (activeTab == "Experience")
+                    {
+                        <div class="form-section">
+                            <div class="section-header-row"><h3>Work Experience</h3><button class="btn-add" @onclick="AddExperienceEntry">+ Add Experience</button></div>
+                            @foreach (var exp in ExperienceList)
+                            {
+                                <div class="entry-card">
+                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(exp.Company) ? "New Position" : exp.Company)</span><button class="btn-icon-delete" @onclick="() => RemoveExperience(exp)">🗑</button></div>
+                                    <div class="entry-card-body">
+                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Company</label><input type="text" @bind="exp.Company" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Position</label><input type="text" @bind="exp.Position" class="form-control-styled" /></div></div></div>
+                                        <div class="form-group"><label>Location</label><input type="text" @bind="exp.Location" class="form-control-styled" /></div>
+                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Start Date</label><input type="text" @bind="exp.StartDate" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>End Date</label><input type="text" @bind="exp.EndDate" class="form-control-styled" /></div></div></div>
+                                        <div class="form-group"><label>Description</label><RichTextEditor @bind-Value="exp.Description" /></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (activeTab == "Tech Skills" || activeTab == "Soft Skills")
+                    {
+                        var isTech = activeTab == "Tech Skills"; var currentList = isTech ? TechSkillsList : SoftSkillsList; var currentInput = isTech ? newTechSkill : newSoftSkill;
+                        <div class="form-section">
+                            <h3>@activeTab</h3>
+                            <div class="skill-input-group">
+                                <input type="text" value="@currentInput" @onchange="@(e => { if (isTech) newTechSkill = e.Value?.ToString() ?? ""; else newSoftSkill = e.Value?.ToString() ?? ""; })" @onkeyup="@(e => KeyUpSkill(e, isTech ? "Tech" : "Soft"))" class="form-control-styled" placeholder="Add skill and press Enter..." />
+                                <button class="btn-add-skill" @onclick="@(() => { if (isTech) AddTechSkill(); else AddSoftSkill(); })">Add</button>
+                            </div>
+                            <div class="skills-container">
+                                @foreach (var skill in currentList)
+                                {
+                                    <span class="skill-pill">@skill <button class="btn-remove-skill" @onclick="() => { if (isTech) RemoveTechSkill(skill); else RemoveSoftSkill(skill); }">×</button></span>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (activeTab == "Projects")
+                    {
+                        <div class="form-section">
+                            <div class="section-header-row"><h3>Projects</h3><button class="btn-add" @onclick="AddProjectEntry">+ Add Project</button></div>
+                            @foreach (var proj in ProjectList)
+                            {
+                                <div class="entry-card">
+                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(proj.Name) ? "New Project" : proj.Name)</span><button class="btn-icon-delete" @onclick="() => RemoveProject(proj)">🗑</button></div>
+                                    <div class="entry-card-body">
+                                        <div class="form-group"><label>Project Name</label><input type="text" @bind="proj.Name" class="form-control-styled" /></div>
+                                        <div class="form-group"><label>Technologies</label><input type="text" @bind="proj.Technologies" class="form-control-styled" /></div>
+                                        <div class="form-group"><label>Description</label><RichTextEditor @bind-Value="proj.Description" /></div>
+                                        <div class="form-group"><label>Link</label><input type="text" @bind="proj.Link" class="form-control-styled" /></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (activeTab == "Certifications")
+                    {
+                        <div class="form-section">
+                            <div class="section-header-row"><h3>Certifications</h3><button class="btn-add" @onclick="AddCertEntry">+ Add Certification</button></div>
+                            @foreach (var cert in CertList)
+                            {
+                                <div class="entry-card">
+                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(cert.Name) ? "New Certification" : cert.Name)</span><button class="btn-icon-delete" @onclick="() => RemoveCert(cert)">🗑</button></div>
+                                    <div class="entry-card-body">
+                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Name</label><input type="text" @bind="cert.Name" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Organization</label><input type="text" @bind="cert.Issuer" class="form-control-styled" /></div></div></div>
+                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Date</label><input type="text" @bind="cert.Date" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Link</label><input type="text" @bind="cert.Link" class="form-control-styled" /></div></div></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (activeTab == "Academic")
+                    {
+                        <div class="form-section">
+                            <div class="section-header-row"><h3>Academic Projects</h3><button class="btn-add" @onclick="AddAcademicEntry">+ Add Academic Project</button></div>
+                            @foreach (var item in AcademicList)
+                            {
+                                <div class="entry-card">
+                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(item.Name) ? "New Project" : item.Name)</span><button class="btn-icon-delete" @onclick="() => RemoveAcademic(item)">🗑</button></div>
+                                    <div class="entry-card-body">
+                                        <div class="form-group"><label>Project Name *</label><input type="text" @bind="item.Name" class="form-control-styled" /></div>
+                                        <div class="form-group"><label>Course/Subject *</label><input type="text" @bind="item.Course" class="form-control-styled" /></div>
+                                        <div class="form-group"><label>Grade (Optional)</label><input type="text" @bind="item.Grade" class="form-control-styled" /></div>
+                                        <div class="form-group"><label>Description *</label><RichTextEditor @bind-Value="item.Description" /></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (activeTab == "Volunteer")
+                    {
+                        <div class="form-section">
+                            <div class="section-header-row"><h3>Volunteer Work</h3><button class="btn-add" @onclick="AddVolunteerEntry">+ Add Volunteer</button></div>
+                            @foreach (var item in VolunteerList)
+                            {
+                                <div class="entry-card">
+                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(item.Organization) ? "New Volunteer" : item.Organization)</span><button class="btn-icon-delete" @onclick="() => RemoveVolunteer(item)">🗑</button></div>
+                                    <div class="entry-card-body">
+                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Organization *</label><input type="text" @bind="item.Organization" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Role *</label><input type="text" @bind="item.Role" class="form-control-styled" /></div></div></div>
+                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Start Date *</label><input type="text" @bind="item.StartDate" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>End Date</label><input type="text" @bind="item.EndDate" class="form-control-styled" /></div></div></div>
+                                        <div class="form-group"><label>Responsibilities & Achievements</label><RichTextEditor @bind-Value="item.Description" /></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (activeTab == "Activities")
+                    {
+                        <div class="form-section">
+                            <div class="section-header-row"><h3>Extracurricular Activities</h3><button class="btn-add" @onclick="AddActivityEntry">+ Add Activity</button></div>
+                            @foreach (var item in ActivityList)
+                            {
+                                <div class="entry-card">
+                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(item.Organization) ? "New Activity" : item.Organization)</span><button class="btn-icon-delete" @onclick="() => RemoveActivity(item)">🗑</button></div>
+                                    <div class="entry-card-body">
+                                        <div class="form-group"><label>Activity/Organization *</label><input type="text" @bind="item.Organization" class="form-control-styled" /></div>
+                                        <div class="form-group"><label>Role/Position *</label><input type="text" @bind="item.Role" class="form-control-styled" /></div>
+                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Start Date *</label><input type="text" @bind="item.StartDate" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>End Date</label><input type="text" @bind="item.EndDate" class="form-control-styled" /></div></div></div>
+                                        <div class="form-group"><label>Description</label><RichTextEditor @bind-Value="item.Description" /></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* --- PREVIEW PANEL --- *@
+            <div class="editor-right-panel" id="resume-preview">
+                <div class="resume-document">
+                    <div class="resume-header" style="border-bottom: 3px solid @(selectedTemplate?.ColorScheme ?? "#2563EB");">
+                        <h1 class="resume-name">@(string.IsNullOrWhiteSpace(resume.FullName) ? "John Doe" : resume.FullName)</h1>
+                        <div class="resume-contact-row">
+                            <span class="contact-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg> @(string.IsNullOrWhiteSpace(resume.Email) ? "email@example.com" : resume.Email)</span>
+                            @if (!string.IsNullOrWhiteSpace(resume.Phone))
+                            {
+                                <span class="contact-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg> @resume.Phone</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(resume.Address))
+                            {
+                                <span class="contact-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg> @resume.Address</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(resume.LinkedIn))
+                            {
+                                <a href="@(resume.LinkedIn.StartsWith("http") ? resume.LinkedIn : "https://" + resume.LinkedIn)" target="_blank" class="contact-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect x="2" y="9" width="4" height="12" /><circle cx="4" cy="4" r="2" /></svg> @resume.LinkedIn</a>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(resume.Website))
+                            {
+                                <a href="@(resume.Website.StartsWith("http") ? resume.Website : "https://" + resume.Website)" target="_blank" class="contact-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg> @resume.Website</a>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="resume-body">
+                        @if (!string.IsNullOrWhiteSpace(resume.Summary))
+                        {
+                            <div class="resume-section"><h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">PROFESSIONAL SUMMARY</h2><div class="section-content">@((MarkupString)resume.Summary)</div></div>
+                        }
+                        @if (TechSkillsList.Any())
+                        {
+                            <div class="resume-section">
+                                <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">TECHNICAL SKILLS</h2><div class="skills-pill-container">
+                                    @foreach (var skill in TechSkillsList)
+                                    {
+                                        <span class="preview-skill-pill" style="color:@(selectedTemplate?.ColorScheme ?? "#2563EB"); background-color:@(selectedTemplate?.ColorScheme ?? "#2563EB")1A; border: 1px solid @(selectedTemplate?.ColorScheme ?? "#2563EB")33;">@skill</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        @if (SoftSkillsList.Any())
+                        {
+                            <div class="resume-section">
+                                <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">SOFT SKILLS</h2><div class="skills-pill-container">
+                                    @foreach (var skill in SoftSkillsList)
+                                    {
+                                        <span class="preview-skill-pill" style="color:@(selectedTemplate?.ColorScheme ?? "#2563EB"); background-color:@(selectedTemplate?.ColorScheme ?? "#2563EB")1A; border: 1px solid @(selectedTemplate?.ColorScheme ?? "#2563EB")33;">@skill</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        @if (ExperienceList.Any())
+                        {
+                            <div class="resume-section">
+                                <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">EXPERIENCE</h2>@foreach (var item in ExperienceList) {
+                                <div class="preview-item"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>@item.Position</span><span>@item.StartDate - @item.EndDate</span></div><div style="font-style:italic;">@item.Company @(!string.IsNullOrEmpty(item.Location) ? $"• {item.Location}" : "")</div><div class="preserve-formatting">@((MarkupString)item.Description)</div></div>
+                            }
+                        </div>
+                    }
+                    @if (EducationList.Any())
+                    {
+                        <div class="resume-section">
+                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">EDUCATION</h2>@foreach (var item in EducationList) {
+                            <div class="preview-item"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>@item.Institution</span><span>@item.StartDate - @item.EndDate</span></div><div>@item.Degree in @item.FieldOfStudy @(!string.IsNullOrEmpty(item.GPA) ? $"• GPA: {item.GPA}" : "")</div></div>
+                        }
+                    </div>
+                                        }
+                    @if (ProjectList.Any())
+                    {
+                        <div class="resume-section">
+                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">PROJECTS</h2>@foreach (var item in ProjectList) {
+                            <div class="preview-item">
+                                <div style="font-weight:bold;">
+                                    @item.Name @if(!string.IsNullOrEmpty(item.Link)) {
+                                    <a href="@(item.Link.StartsWith("http") ? item.Link : "https://" + item.Link)" target="_blank" style="font-size:0.8em; font-weight:normal; margin-left:5px;">(Link 🔗)</a>
+                                }
+                            </div><div class="preserve-formatting">@((MarkupString)item.Description)</div>@if (!string.IsNullOrEmpty(item.Technologies)) {
+                            <div style="font-size:0.85em; color:#666;">Tech: @item.Technologies</div>
+                                                        }
+                        </div>
+                                                }
+                    </div>
+                                        }
+                    @if (CertList.Any())
+                    {
+                        <div class="resume-section">
+                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">CERTIFICATIONS</h2>@foreach (var item in CertList) {
+                            <div class="preview-item">
+                                <strong>@item.Name</strong> | @item.Issuer (@item.Date) @if(!string.IsNullOrEmpty(item.Link)){
+                                <a href="@(item.Link.StartsWith("http") ? item.Link : "https://" + item.Link)" target="_blank" style="margin-left:5px;">🔗</a>
+                            }
+                        </div>
+                                                }
+                    </div>
+                                        }
+                    @if (AcademicList.Any())
+                    {
+                        <div class="resume-section">
+                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">ACADEMIC ACHIEVEMENTS</h2>@foreach (var item in AcademicList) {
+                            <div class="preview-item"><div style="font-weight:bold;">@item.Name</div><div style="font-style:italic;">@item.Course @(!string.IsNullOrEmpty(item.Grade) ? $"• Grade: {item.Grade}" : "")</div><div class="preserve-formatting">@((MarkupString)item.Description)</div></div>
+                        }
+                    </div>
+                                        }
+                    @if (VolunteerList.Any())
+                    {
+                        <div class="resume-section">
+                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">VOLUNTEER EXPERIENCE</h2>@foreach (var item in VolunteerList) {
+                            <div class="preview-item"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>@item.Organization</span><span>@item.StartDate - @item.EndDate</span></div><div style="font-style:italic;">@item.Role</div><div class="preserve-formatting">@((MarkupString)item.Description)</div></div>
+                        }
+                    </div>
+                                        }
+                    @if (ActivityList.Any())
+                    {
+                        <div class="resume-section">
+                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">ACTIVITIES & INTERESTS</h2>@foreach (var item in ActivityList) {
+                            <div class="preview-item"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>@item.Organization</span><span>@item.StartDate - @item.EndDate</span></div><div style="font-style:italic;">@item.Role</div><div class="preserve-formatting">@((MarkupString)item.Description)</div></div>
+                        }
+                    </div>
+                                        }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+@code {
+    [Parameter] public int TemplateId { get; set; }
+    [Parameter] public string ResumeId { get; set; } = "";
+
+    private Resume resume = new();
+    private ResumeTemplate? selectedTemplate;
+    private string activeTab = "Personal";
+
+    // UI State
+    private bool isPreviewMode = false;
+    private bool isSaving = false;
+    private bool isLoading = true; // Added loading state
+    private string lastSaveTime = "";
+
+    private void TogglePreview() => isPreviewMode = !isPreviewMode;
+
+    // View Models
+    public class EducationEntry { public string Institution { get; set; } = ""; public string Degree { get; set; } = ""; public string FieldOfStudy { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string GPA { get; set; } = ""; }
+    public class ExperienceEntry { public string Company { get; set; } = ""; public string Position { get; set; } = ""; public string Location { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string Description { get; set; } = ""; }
+    public class ProjectEntry { public string Name { get; set; } = ""; public string Description { get; set; } = ""; public string Technologies { get; set; } = ""; public string Link { get; set; } = ""; }
+    public class CertEntry { public string Name { get; set; } = ""; public string Issuer { get; set; } = ""; public string Date { get; set; } = ""; public string Link { get; set; } = ""; }
+    public class AcademicEntry { public string Name { get; set; } = ""; public string Course { get; set; } = ""; public string Grade { get; set; } = ""; public string Description { get; set; } = ""; }
+    public class VolunteerEntry { public string Organization { get; set; } = ""; public string Role { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string Description { get; set; } = ""; }
+    public class ActivityEntry { public string Organization { get; set; } = ""; public string Role { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string Description { get; set; } = ""; }
+
+    // Lists
+    private List<EducationEntry> EducationList = new();
+    private List<ExperienceEntry> ExperienceList = new();
+    private List<ProjectEntry> ProjectList = new();
+    private List<CertEntry> CertList = new();
+    private List<string> TechSkillsList = new();
+    private List<string> SoftSkillsList = new();
+    private List<AcademicEntry> AcademicList = new();
+    private List<VolunteerEntry> VolunteerList = new();
+    private List<ActivityEntry> ActivityList = new();
+
+    private string newTechSkill = "";
+    private string newSoftSkill = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true; // Start loading
+        await AuthService.InitializeAsync();
+
+        if (string.IsNullOrEmpty(AuthService.AuthToken))
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        var currentUserId = AuthService.CurrentUser?.Id;
+        selectedTemplate = ResumeService.GetTemplate(TemplateId) ?? new ResumeTemplate { Name = "Modern Template", ColorScheme = "#2563EB" };
+
+        if (!string.IsNullOrEmpty(ResumeId))
+        {
+            var existingResume = await ResumeService.GetResume(ResumeId, currentUserId);
+            if (existingResume != null)
+            {
+                resume = existingResume;
+                DeserializeData();
+            }
+        }
+        else
+        {
+            resume.TemplateId = TemplateId;
+            resume.UserId = AuthService.CurrentUser?.Id ?? "rafay";
+            resume.Email = AuthService.CurrentUser?.Email ?? "";
+            resume.FullName = AuthService.CurrentUser?.Name ?? "";
+        }
+
+        isLoading = false; // Stop loading
+    }
+
+    private void DeserializeData()
+    {
+        try { EducationList = string.IsNullOrEmpty(resume.Education) ? new() : JsonSerializer.Deserialize<List<EducationEntry>>(resume.Education!) ?? new(); } catch { }
+        try { ExperienceList = string.IsNullOrEmpty(resume.Experience) ? new() : JsonSerializer.Deserialize<List<ExperienceEntry>>(resume.Experience!) ?? new(); } catch { }
+        try { ProjectList = string.IsNullOrEmpty(resume.Projects) ? new() : JsonSerializer.Deserialize<List<ProjectEntry>>(resume.Projects!) ?? new(); } catch { }
+        try { CertList = string.IsNullOrEmpty(resume.Certifications) ? new() : JsonSerializer.Deserialize<List<CertEntry>>(resume.Certifications!) ?? new(); } catch { }
+        if (!string.IsNullOrEmpty(resume.Skills)) TechSkillsList = resume.Skills!.Trim().StartsWith("[") ? JsonSerializer.Deserialize<List<string>>(resume.Skills!) : resume.Skills!.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+        if (!string.IsNullOrEmpty(resume.SoftSkills)) SoftSkillsList = resume.SoftSkills!.Trim().StartsWith("[") ? JsonSerializer.Deserialize<List<string>>(resume.SoftSkills!) : resume.SoftSkills!.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+        try { AcademicList = string.IsNullOrEmpty(resume.Academic) || !resume.Academic!.Trim().StartsWith("[") ? new() : JsonSerializer.Deserialize<List<AcademicEntry>>(resume.Academic!) ?? new(); } catch { }
+        try { VolunteerList = string.IsNullOrEmpty(resume.Volunteer) || !resume.Volunteer!.Trim().StartsWith("[") ? new() : JsonSerializer.Deserialize<List<VolunteerEntry>>(resume.Volunteer!) ?? new(); } catch { }
+        try { ActivityList = string.IsNullOrEmpty(resume.Activities) || !resume.Activities!.Trim().StartsWith("[") ? new() : JsonSerializer.Deserialize<List<ActivityEntry>>(resume.Activities!) ?? new(); } catch { }
+    }
+
+    private void SerializeData()
+    {
+        resume.Education = JsonSerializer.Serialize(EducationList);
+        resume.Experience = JsonSerializer.Serialize(ExperienceList);
+        resume.Projects = JsonSerializer.Serialize(ProjectList);
+        resume.Certifications = JsonSerializer.Serialize(CertList);
+        resume.Skills = JsonSerializer.Serialize(TechSkillsList);
+        resume.SoftSkills = JsonSerializer.Serialize(SoftSkillsList);
+        resume.Academic = JsonSerializer.Serialize(AcademicList);
+        resume.Volunteer = JsonSerializer.Serialize(VolunteerList);
+        resume.Activities = JsonSerializer.Serialize(ActivityList);
+    }
+
+    private async Task SaveResume(bool silent = false)
+    {
+        if (string.IsNullOrEmpty(resume.UserId)) return;
+
+        if (!silent)
+        {
+            isSaving = true;
+            StateHasChanged();
+        }
+
+        SerializeData();
+        await ResumeService.SaveResume(resume);
+
+        lastSaveTime = DateTime.Now.ToString("h:mm tt");
+
+        if (!silent)
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadPDF()
+    {
+        await SaveResume(silent: true);
+        try
+        {
+            var pdfResume = new Resume
+            {
+                Id = resume.Id,
+                UserId = resume.UserId,
+                TemplateId = resume.TemplateId,
+                FullName = resume.FullName,
+                Email = resume.Email,
+                Phone = resume.Phone,
+                Address = resume.Address,
+                LinkedIn = resume.LinkedIn,
+                Website = resume.Website,
+                Summary = StripHtml(resume.Summary!),
+                Education = JsonSerializer.Serialize(EducationList),
+                Experience = JsonSerializer.Serialize(GetCleanExperience()),
+                Projects = JsonSerializer.Serialize(GetCleanProjects()),
+                Certifications = JsonSerializer.Serialize(CertList),
+                Skills = string.Join(", ", TechSkillsList),
+                SoftSkills = string.Join(", ", SoftSkillsList),
+                Academic = JsonSerializer.Serialize(GetCleanAcademic()),
+                Volunteer = JsonSerializer.Serialize(GetCleanVolunteer()),
+                Activities = JsonSerializer.Serialize(GetCleanActivities())
+            };
+
+            var pdfBytes = await ResumeService.GeneratePDF(pdfResume, selectedTemplate);
+            var base64 = Convert.ToBase64String(pdfBytes);
+            var fileName = $"{resume.FullName.Replace(" ", "_")}_Resume.pdf";
+            await JSRuntime.InvokeVoidAsync("downloadFileFromBase64", fileName, "application/pdf", base64);
+        }
+        catch (JsonException ex) { Console.WriteLine($"JSON Serialization Error: {ex.Message}"); }
+        catch (Exception ex) { Console.WriteLine($"Error during PDF Download: {ex.Message}"); }
+    }
+
+    private string StripHtml(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return string.Empty;
+        var step1 = Regex.Replace(input, @"</p>|<br>|</li>", "\n");
+        var step2 = Regex.Replace(step1, "<.*?>", string.Empty);
+        return System.Net.WebUtility.HtmlDecode(step2).Trim();
+    }
+
+    private List<ExperienceEntry> GetCleanExperience() => ExperienceList.Select(e => new ExperienceEntry { Company = e.Company, Position = e.Position, Location = e.Location, StartDate = e.StartDate, EndDate = e.EndDate, Description = StripHtml(e.Description!) }).ToList();
+    private List<ProjectEntry> GetCleanProjects() => ProjectList.Select(p => new ProjectEntry { Name = p.Name, Technologies = p.Technologies, Link = p.Link, Description = StripHtml(p.Description!) }).ToList();
+    private List<AcademicEntry> GetCleanAcademic() => AcademicList.Select(a => new AcademicEntry { Name = a.Name, Course = a.Course, Grade = a.Grade, Description = StripHtml(a.Description!) }).ToList();
+    private List<VolunteerEntry> GetCleanVolunteer() => VolunteerList.Select(v => new VolunteerEntry { Organization = v.Organization, Role = v.Role, StartDate = v.StartDate, EndDate = v.EndDate, Description = StripHtml(v.Description!) }).ToList();
+    private List<ActivityEntry> GetCleanActivities() => ActivityList.Select(a => new ActivityEntry { Organization = a.Organization, Role = a.Role, StartDate = a.StartDate, EndDate = a.EndDate, Description = StripHtml(a.Description!) }).ToList();
+
+    private void AddEducationEntry() => EducationList.Add(new EducationEntry());
+    private void RemoveEducation(EducationEntry item) => EducationList.Remove(item);
+    private void AddExperienceEntry() => ExperienceList.Add(new ExperienceEntry());
+    private void RemoveExperience(ExperienceEntry item) => ExperienceList.Remove(item);
+    private void AddProjectEntry() => ProjectList.Add(new ProjectEntry());
+    private void RemoveProject(ProjectEntry item) => ProjectList.Remove(item);
+    private void AddCertEntry() => CertList.Add(new CertEntry());
+    private void RemoveCert(CertEntry item) => CertList.Remove(item);
+    private void AddAcademicEntry() => AcademicList.Add(new AcademicEntry());
+    private void RemoveAcademic(AcademicEntry item) => AcademicList.Remove(item);
+    private void AddVolunteerEntry() => VolunteerList.Add(new VolunteerEntry());
+    private void RemoveVolunteer(VolunteerEntry item) => VolunteerList.Remove(item);
+    private void AddActivityEntry() => ActivityList.Add(new ActivityEntry());
+    private void RemoveActivity(ActivityEntry item) => ActivityList.Remove(item);
+
+    private void AddTechSkill() { if (!string.IsNullOrWhiteSpace(newTechSkill)) { TechSkillsList.Add(newTechSkill.Trim()); newTechSkill = ""; } }
+    private void RemoveTechSkill(string s) => TechSkillsList.Remove(s);
+    private void AddSoftSkill() { if (!string.IsNullOrWhiteSpace(newSoftSkill)) { SoftSkillsList.Add(newSoftSkill.Trim()); newSoftSkill = ""; } }
+    private void RemoveSoftSkill(string s) => SoftSkillsList.Remove(s);
+    private void KeyUpSkill(KeyboardEventArgs e, string type) { if (e.Key == "Enter") { if (type == "Tech") AddTechSkill(); else AddSoftSkill(); } }
+
+    private void GoBack() => Navigation.NavigateTo("/templates");
+}
+
+<style>
+    :root {
+        --primary-color: #2563EB;
+        --bg-app: #f3f4f6;
+        --bg-panel-left: #ffffff;
+        --bg-panel-right: #e5e7eb;
+        --border-color: #e5e7eb;
+        --text-dark: #111827;
+        --text-medium: #374151;
+        --text-light: #6b7280;
+        --input-bg: #f9fafb;
+    }
+
+    .editor-page-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background-color: var(--bg-app);
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* --- LOADER --- */
+    .loader-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100%;
+        background-color: var(--bg-app);
+        color: var(--text-light);
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #e5e7eb;
+        border-top: 3px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .loading-text {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text-medium);
+    }
+
+    /* --- EXISTING STYLES --- */
+    .editor-top-header {
+        background: #ffffff;
+        border-bottom: 1px solid var(--border-color);
+        padding: 0 1.5rem;
+        height: 64px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+        .header-left h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+    .btn-back {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: transparent;
+        border: none;
+        color: var(--text-medium);
+        font-weight: 500;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 6px;
+    }
+
+        .btn-back:hover {
+            background: var(--bg-app);
+        }
+
+    .header-divider {
+        height: 24px;
+        width: 1px;
+        background: var(--border-color);
+    }
+
+    .header-right {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-preview {
+        background: var(--bg-app);
+        border: 1px solid var(--border-color);
+        color: var(--text-medium);
+    }
+
+        .btn-preview:hover {
+            background: #e5e7eb;
+        }
+
+    .btn-download {
+        background: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        color: white;
+    }
+
+        .btn-download:hover {
+            background: #1d4ed8;
+        }
+
+    .editor-main-content {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .editor-left-panel {
+        width: 55%;
+        max-width: 700px;
+        background: var(--bg-panel-left);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .editor-right-panel {
+        flex: 1;
+        background: var(--bg-panel-right);
+        padding: 2rem;
+        overflow-y: auto;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* RESPONSIVE TOGGLE LOGIC */
+    .preview-active .editor-left-panel {
+        display: none !important;
+    }
+
+    .preview-active .editor-right-panel {
+        width: 100% !important;
+        display: flex !important;
+    }
+
+    @@media (max-width: 1024px) {
+        .editor-left-panel {
+            width: 100% !important;
+            border-right: none;
+        }
+
+        .editor-right-panel {
+            display: none;
+        }
+        /* Default hide preview on mobile */
+        /* When preview active, hide left, show right */
+        .preview-active .editor-left-panel {
+            display: none !important;
+        }
+
+        .preview-active .editor-right-panel {
+            display: flex !important;
+            width: 100% !important;
+        }
+    }
+
+    /* Common Styles */
+    .tab-navigation-container {
+        padding: 1.5rem;
+        padding-bottom: 1rem;
+    }
+
+    .tab-navigation-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        background: #f3f4f6;
+        padding: 0.375rem;
+        border-radius: 12px;
+    }
+
+    .tab-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: none;
+        background: transparent;
+        color: var(--text-light);
+        font-weight: 500;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .tab-btn:hover {
+            color: var(--text-medium);
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--text-dark);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-weight: 600;
+        }
+
+    .form-content-area {
+        padding: 0 1.5rem 2rem 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .scrollable::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scrollable::-webkit-scrollbar-thumb {
+        background-color: #d1d5db;
+        border-radius: 10px;
+    }
+
+    .form-section h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 1.25rem;
+    }
+
+    .section-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-medium);
+            margin-bottom: 0.5rem;
+        }
+
+    .form-control-styled {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background-color: var(--input-bg);
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        color: var(--text-dark);
+        outline: none;
+        transition: all 0.2s;
+    }
+
+        .form-control-styled:focus {
+            background-color: #ffffff;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+    .form-row {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .form-col {
+        flex: 1;
+    }
+
+    .entry-card {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .entry-card-header {
+        background: #f9fafb;
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .entry-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--text-dark);
+    }
+
+    .entry-card-body {
+        padding: 1.25rem;
+    }
+
+    .btn-add {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .btn-icon-delete {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: red;
+        padding: 4px;
+        border-radius: 4px;
+        display: flex;
+    }
+
+        .btn-icon-delete:hover {
+            background: #fee2e2;
+        }
+
+    .skill-input-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .btn-add-skill {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0 1.25rem;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .skills-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .skill-pill {
+        background: #eff6ff;
+        color: var(--primary-color);
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-remove-skill {
+        background: transparent;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        font-size: 1.1rem;
+        line-height: 1;
+        padding: 0 2px;
+        opacity: 0.6;
+    }
+
+        .btn-remove-skill:hover {
+            opacity: 1;
+        }
+
+    .text-muted {
+        color: var(--text-light);
+        font-style: italic;
+    }
+
+    /* Resume Doc */
+    .resume-document {
+        width: 100%;
+        max-width: 850px;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        min-height: 11in;
+        padding: 0.75in;
+        color: #333;
+    }
+
+    .resume-header {
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .resume-name {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #111827;
+        margin: 0 0 0.75rem 0;
+        letter-spacing: -0.03em;
+        line-height: 1;
+    }
+
+    .resume-contact-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        font-size: 0.95rem;
+        color: #4b5563;
+        margin-top: 0.5rem;
+    }
+
+    .contact-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: inherit;
+        text-decoration: none;
+    }
+
+        .contact-item svg {
+            color: inherit;
+            opacity: 0.8;
+        }
+
+    .resume-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .section-content {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #374151;
+        margin: 0;
+    }
+
+    .preview-item {
+        margin-bottom: 1.25rem;
+    }
+
+        .preview-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .preserve-formatting {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        margin-top: 0.5rem;
+        line-height: 1.5;
+    }
+
+    .skills-pill-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .preview-skill-pill {
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border: 1px solid transparent;
+        display: inline-block;
+    }
+
+    /* NEW STYLES FOR SAVE BUTTON AND STATUS */
+    .save-status {
+        margin-left: 1rem;
+        font-size: 0.85rem;
+        color: var(--text-light);
+    }
+
+    .status-saving {
+        color: var(--primary-color);
+        font-weight: 500;
+    }
+
+    .btn-save {
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        color: var(--text-dark);
+    }
+
+        .btn-save:hover {
+            background: #f9fafb;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-save:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+</style>

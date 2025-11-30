@@ -1,0 +1,65 @@
+﻿@page "/templates"
+@inject ResumeService ResumeService
+@inject NavigationManager Navigation
+@inject AuthService AuthService
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>Templates - ResumeCloud</PageTitle>
+
+<div class="templates-page">
+    <div class="page-header">
+        <h1>Choose a Template</h1>
+        <p>Select a professionally designed template to get started</p>
+    </div>
+
+    <div class="templates-grid">
+
+        @foreach (var template in templates)
+        {
+            <div class="template-card" @onclick="() => SelectTemplate(template.Id)">
+                <div class="template-preview"
+                     style="background: linear-gradient(135deg, @template.ColorScheme, @($"{template.ColorScheme}CC"));">
+                    <div class="preview-content">
+                        <div class="preview-header"></div>
+                        <div class="preview-line"></div>
+                        <div class="preview-line short"></div>
+
+                        <div class="preview-section">
+                            <div class="preview-line"></div>
+                            <div class="preview-line"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="template-info">
+                    <h3>@template.Name</h3>
+                    <p>@template.Description</p>
+                    <button class="btn-select">Use Template</button>
+                </div>
+            </div>
+        }
+
+    </div>
+</div>
+
+@code {
+    private List<ResumeTemplate> templates = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 2. Check if the Token string is null or empty
+        await AuthService.InitializeAsync();
+
+        if (string.IsNullOrEmpty(AuthService.AuthToken))
+        {
+            Navigation.NavigateTo("/");
+        }
+
+        templates = ResumeService.GetTemplates();
+    }
+
+    private void SelectTemplate(int templateId)
+    {
+        Navigation.NavigateTo($"/editor/{templateId}");
+    }
+}
