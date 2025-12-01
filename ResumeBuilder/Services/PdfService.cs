@@ -227,14 +227,82 @@ namespace ResumeBuilder.Services
         
         private void RenderHeader(IContainer container, Resume resume, ResumeTemplate template)
         {
-             // ... [Paste your existing RenderHeader code here] ...
-             // For brevity in this response, I assume you keep the existing method
-             var color = HexToColor(template.ColorScheme);
-             container.Column(column =>
-             {
-                 column.Item().Text(resume.FullName).FontSize(24).Bold().FontColor(Colors.Black).LineHeight(1);
-                 // ... rest of your existing logic ...
-             });
+            var color = HexToColor(template.ColorScheme);
+            container.Column(column =>
+            {
+                column.Item().Text(resume.FullName).FontSize(24).Bold().FontColor(Colors.Black).LineHeight(1);
+                column.Item().PaddingTop(8).Row(row =>
+                {
+                    row.Spacing(15);
+                    if (!string.IsNullOrWhiteSpace(resume.Email))
+                    {
+                        row.AutoItem().Row(r =>
+                        {
+                            r.ConstantItem(16).Element(e =>
+                            {
+                                string xml = $@"<svg viewBox=""0 0 24 24"" fill=""none"" stroke=""{template.ColorScheme}"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round"" xmlns=""http://www.w3.org/2000/svg"">{IconEmail}</svg>";
+                                e.Svg(xml);
+                            });
+                            r.AutoItem().PaddingLeft(4).Text(resume.Email).FontSize(10).FontColor(Colors.Grey.Darken1);
+                        });
+                    }
+                    if (!string.IsNullOrWhiteSpace(resume.Phone))
+                    {
+                        row.AutoItem().Row(r =>
+                        {
+                            r.ConstantItem(16).Element(e =>
+                            {
+                                string xml = $@"<svg viewBox=""0 0 24 24"" fill=""none"" stroke=""{template.ColorScheme}"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round"" xmlns=""http://www.w3.org/2000/svg"">{IconPhone}</svg>";
+                                e.Svg(xml);
+                            });
+                            r.AutoItem().PaddingLeft(4).Text(resume.Phone).FontSize(10).FontColor(Colors.Grey.Darken1);
+                        });
+                    }
+                    if (!string.IsNullOrWhiteSpace(resume.Address))
+                    {
+                        row.AutoItem().Row(r =>
+                        {
+                            r.ConstantItem(16).Element(e =>
+                            {
+                                string xml = $@"<svg viewBox=""0 0 24 24"" fill=""none"" stroke=""{template.ColorScheme}"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round"" xmlns=""http://www.w3.org/2000/svg"">{IconMap}</svg>";
+                                e.Svg(xml);
+                            });
+                            r.AutoItem().PaddingLeft(4).Text(resume.Address).FontSize(10).FontColor(Colors.Grey.Darken1);
+                        });
+                    }
+                });
+                if (!string.IsNullOrWhiteSpace(resume.LinkedIn) || !string.IsNullOrWhiteSpace(resume.Website))
+                {
+                    column.Item().PaddingTop(5).Row(row =>
+                    {
+                        row.Spacing(15);
+                        if (!string.IsNullOrWhiteSpace(resume.LinkedIn))
+                        {
+                            row.AutoItem().Row(r =>
+                            {
+                                r.ConstantItem(16).Element(e =>
+                                {
+                                    string xml = $@"<svg viewBox=""0 0 24 24"" fill=""none"" stroke=""{template.ColorScheme}"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round"" xmlns=""http://www.w3.org/2000/svg"">{IconLink}</svg>";
+                                    e.Svg(xml);
+                                });
+                                r.AutoItem().PaddingLeft(4).Text(resume.LinkedIn).FontSize(10).FontColor(color);
+                            });
+                        }
+                        if (!string.IsNullOrWhiteSpace(resume.Website))
+                        {
+                            row.AutoItem().Row(r =>
+                            {
+                                r.ConstantItem(16).Element(e =>
+                                {
+                                    string xml = $@"<svg viewBox=""0 0 24 24"" fill=""none"" stroke=""{template.ColorScheme}"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round"" xmlns=""http://www.w3.org/2000/svg"">{IconGlobe}</svg>";
+                                    e.Svg(xml);
+                                });
+                                r.AutoItem().PaddingLeft(4).Text(resume.Website).FontSize(10).FontColor(color);
+                            });
+                        }
+                    });
+                }
+            });
         }
 
         // ... Paste RenderExperience, RenderEducation, RenderSkills, etc. exactly as they were ...
@@ -305,11 +373,117 @@ namespace ResumeBuilder.Services
 
         // Include RenderProjects, RenderCertifications, RenderAcademic, RenderVolunteer, RenderActivities exactly as before...
         // For brevity, assuming they are pasted here.
-        private void RenderProjects(IContainer container, string json, string colorHex) { /* Paste original */ }
-        private void RenderCertifications(IContainer container, string json, string colorHex) { /* Paste original */ }
-        private void RenderAcademic(IContainer container, string json, string colorHex) { /* Paste original */ }
-        private void RenderVolunteer(IContainer container, string json, string colorHex) { /* Paste original */ }
-        private void RenderActivities(IContainer container, string json, string colorHex) { /* Paste original */ }
+        private void RenderProjects(IContainer container, string json, string colorHex)
+        {
+            var list = JsonSerializer.Deserialize<List<PdfProj>>(json);
+            if (list == null || !list.Any()) return;
+            var color = HexToColor(colorHex);
+            container.Column(column =>
+            {
+                column.Item().PaddingBottom(5).Column(c => { c.Item().Text("PROJECTS").FontSize(12).Bold().FontColor(color).LetterSpacing(0.05f); c.Item().PaddingTop(2).Height(1).Background(Colors.Grey.Lighten2); });
+                foreach (var item in list)
+                {
+                    column.Item().PaddingBottom(10).Column(entry =>
+                    {
+                        entry.Item().Text(item.Name).Bold().FontSize(11).FontColor(Colors.Black);
+                        if (!string.IsNullOrWhiteSpace(item.Technologies)) entry.Item().Text($"Technologies: {item.Technologies}").FontSize(9).Italic();
+                        if (!string.IsNullOrWhiteSpace(item.Description)) entry.Item().PaddingTop(2).Text(item.Description).FontSize(10).LineHeight(1.4f);
+                        if (!string.IsNullOrWhiteSpace(item.Link)) entry.Item().Text(item.Link).FontSize(9).FontColor(color);
+                    });
+                }
+            });
+        }
+        private void RenderCertifications(IContainer container, string json, string colorHex)
+        {
+            var list = JsonSerializer.Deserialize<List<PdfCert>>(json);
+            if (list == null || !list.Any()) return;
+            var color = HexToColor(colorHex);
+            container.Column(column =>
+            {
+                column.Item().PaddingBottom(5).Column(c => { c.Item().Text("CERTIFICATIONS").FontSize(12).Bold().FontColor(color).LetterSpacing(0.05f); c.Item().PaddingTop(2).Height(1).Background(Colors.Grey.Lighten2); });
+                foreach (var item in list)
+                {
+                    column.Item().PaddingBottom(8).Column(entry =>
+                    {
+                        entry.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text(item.Name).Bold().FontSize(11).FontColor(Colors.Black);
+                            if (!string.IsNullOrWhiteSpace(item.Date)) row.AutoItem().Text(item.Date).FontSize(10);
+                        });
+                        if (!string.IsNullOrWhiteSpace(item.Issuer)) entry.Item().Text(item.Issuer).FontSize(10);
+                        if (!string.IsNullOrWhiteSpace(item.Link)) entry.Item().Text(item.Link).FontSize(9).FontColor(color);
+                    });
+                }
+            });
+        }
+        private void RenderAcademic(IContainer container, string json, string colorHex)
+        {
+            var list = JsonSerializer.Deserialize<List<PdfAcademic>>(json);
+            if (list == null || !list.Any()) return;
+            var color = HexToColor(colorHex);
+            container.Column(column =>
+            {
+                column.Item().PaddingBottom(5).Column(c => { c.Item().Text("ACADEMIC ACHIEVEMENTS").FontSize(12).Bold().FontColor(color).LetterSpacing(0.05f); c.Item().PaddingTop(2).Height(1).Background(Colors.Grey.Lighten2); });
+                foreach (var item in list)
+                {
+                    column.Item().PaddingBottom(8).Column(entry =>
+                    {
+                        entry.Item().Text(item.Name).Bold().FontSize(11).FontColor(Colors.Black);
+                        if (!string.IsNullOrWhiteSpace(item.Course)) entry.Item().Text(item.Course).FontSize(10);
+                        if (!string.IsNullOrWhiteSpace(item.Grade)) entry.Item().Text($"Grade: {item.Grade}").FontSize(10).Italic();
+                        if (!string.IsNullOrWhiteSpace(item.Description)) entry.Item().PaddingTop(2).Text(item.Description).FontSize(10).LineHeight(1.4f);
+                    });
+                }
+            });
+        }
+        private void RenderVolunteer(IContainer container, string json, string colorHex)
+        {
+            var list = JsonSerializer.Deserialize<List<PdfVolunteer>>(json);
+            if (list == null || !list.Any()) return;
+            var color = HexToColor(colorHex);
+            container.Column(column =>
+            {
+                column.Item().PaddingBottom(5).Column(c => { c.Item().Text("VOLUNTEER EXPERIENCE").FontSize(12).Bold().FontColor(color).LetterSpacing(0.05f); c.Item().PaddingTop(2).Height(1).Background(Colors.Grey.Lighten2); });
+                foreach (var item in list)
+                {
+                    column.Item().PaddingBottom(10).Column(entry =>
+                    {
+                        entry.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text(item.Organization).Bold().FontSize(11).FontColor(Colors.Black);
+                            if (!string.IsNullOrWhiteSpace(item.StartDate) && !string.IsNullOrWhiteSpace(item.EndDate))
+                                row.AutoItem().Text($"{item.StartDate} - {item.EndDate}").FontSize(10);
+                        });
+                        if (!string.IsNullOrWhiteSpace(item.Role)) entry.Item().Text(item.Role).Italic().FontSize(10.5f);
+                        if (!string.IsNullOrWhiteSpace(item.Description)) entry.Item().PaddingTop(2).Text(item.Description).FontSize(10).LineHeight(1.4f);
+                    });
+                }
+            });
+        }
+        private void RenderActivities(IContainer container, string json, string colorHex)
+        {
+            var list = JsonSerializer.Deserialize<List<PdfActivity>>(json);
+            if (list == null || !list.Any()) return;
+            var color = HexToColor(colorHex);
+            container.Column(column =>
+            {
+                column.Item().PaddingBottom(5).Column(c => { c.Item().Text("ACTIVITIES & INTERESTS").FontSize(12).Bold().FontColor(color).LetterSpacing(0.05f); c.Item().PaddingTop(2).Height(1).Background(Colors.Grey.Lighten2); });
+                foreach (var item in list)
+                {
+                    column.Item().PaddingBottom(10).Column(entry =>
+                    {
+                        entry.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text(item.Organization).Bold().FontSize(11).FontColor(Colors.Black);
+                            if (!string.IsNullOrWhiteSpace(item.StartDate) && !string.IsNullOrWhiteSpace(item.EndDate))
+                                row.AutoItem().Text($"{item.StartDate} - {item.EndDate}").FontSize(10);
+                        });
+                        if (!string.IsNullOrWhiteSpace(item.Role)) entry.Item().Text(item.Role).Italic().FontSize(10.5f);
+                        if (!string.IsNullOrWhiteSpace(item.Description)) entry.Item().PaddingTop(2).Text(item.Description).FontSize(10).LineHeight(1.4f);
+                    });
+                }
+            });
+        }
 
         private Color HexToColor(string hex) { try { return Color.FromHex(hex); } catch { return Colors.Blue.Medium; } }
     }

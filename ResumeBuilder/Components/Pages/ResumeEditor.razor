@@ -495,6 +495,22 @@ else
             </div>
         </div>
     </div>
+
+    @* --- TITLE MODAL --- *@
+    @if (showTitleModal)
+    {
+        <div class="modal-overlay" @onclick="() => showTitleModal = false">
+            <div class="modal-content" @onclick:stopPropagation="true">
+                <h3>Save Resume</h3>
+                <p>Enter a title for your resume:</p>
+                <input type="text" @bind="tempResumeTitle" class="modal-input" placeholder="My Resume" @onkeydown="HandleTitleKeyDown" />
+                <div class="modal-actions">
+                    <button class="modal-btn modal-btn-cancel" @onclick="() => showTitleModal = false">Cancel</button>
+                    <button class="modal-btn modal-btn-save" @onclick="SaveWithTitle">Save</button>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 }
 
@@ -511,6 +527,8 @@ else
     private bool isSaving = false;
     private bool isLoading = true; // Added loading state
     private string lastSaveTime = "";
+    private bool showTitleModal = false;
+    private string tempResumeTitle = "";
 
     private void TogglePreview() => isPreviewMode = !isPreviewMode;
 
@@ -603,6 +621,15 @@ else
 
         if (!silent)
         {
+            // Show title modal on first manual save
+            if (string.IsNullOrEmpty(resume.Id) || resume.Title == "Untitled Resume")
+            {
+                showTitleModal = true;
+                tempResumeTitle = $"{AuthService.CurrentUser?.Name ?? "My"} Resume";
+                StateHasChanged();
+                return;
+            }
+            
             isSaving = true;
             StateHasChanged();
         }
@@ -616,6 +643,35 @@ else
         {
             isSaving = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task SaveWithTitle()
+    {
+        if (string.IsNullOrWhiteSpace(tempResumeTitle))
+        {
+            tempResumeTitle = $"{AuthService.CurrentUser?.Name ?? "My"} Resume";
+        }
+        
+        resume.Title = tempResumeTitle;
+        showTitleModal = false;
+        
+        isSaving = true;
+        StateHasChanged();
+
+        SerializeData();
+        await ResumeService.SaveResume(resume);
+
+        lastSaveTime = DateTime.Now.ToString("h:mm tt");
+        isSaving = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleTitleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SaveWithTitle();
         }
     }
 
@@ -1108,11 +1164,15 @@ else
     .resume-document {
         width: 100%;
         max-width: 850px;
+        max-height: calc(100vh - 8rem);
         background: white;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        min-height: 11in;
         padding: 0.75in;
         color: #333;
+        overflow: auto;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
     }
 
     .resume-header {
@@ -1232,4 +1292,88 @@ else
             opacity: 0.7;
             cursor: not-allowed;
         }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        backdrop-filter: blur(2px);
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-content h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+        color: #111827;
+    }
+
+    .modal-content p {
+        margin: 0 0 1.5rem 0;
+        color: #6b7280;
+    }
+
+    .modal-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+        transition: border-color 0.2s;
+    }
+
+    .modal-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+    }
+
+    .modal-btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+    }
+
+    .modal-btn-cancel {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .modal-btn-cancel:hover {
+        background: #e5e7eb;
+    }
+
+    .modal-btn-save {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .modal-btn-save:hover {
+        background: #2563eb;
+    }
 </style>
