@@ -20,6 +20,9 @@ namespace ResumeBuilder.Models
         [JsonProperty("passwordHash")]
         public string PasswordHash { get; set; } = string.Empty;
 
+        [JsonProperty("profileImageUrl")]
+        public string ProfileImageUrl { get; set; } = string.Empty;
+
         [JsonProperty("createdAt")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

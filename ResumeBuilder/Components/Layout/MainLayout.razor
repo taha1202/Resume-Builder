@@ -1,8 +1,8 @@
 @inherits LayoutComponentBase
+@implements IDisposable
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 @* Removed duplicate AuthService inject *@
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <div class="page @(isSidebarExpanded ? "sidebar-expanded" : "sidebar-collapsed")">
 
@@ -58,8 +58,15 @@
             </nav>
 
             <div class="sidebar-footer">
-                <div class="user-info">
-                    <div class="user-avatar">@GetUserInitials()</div>
+                <div class="user-info" @onclick="GoToProfile">
+                    @if (!string.IsNullOrEmpty(AuthService.CurrentUser?.ProfileImageUrl))
+                    {
+                        <img src="@AuthService.CurrentUser.ProfileImageUrl" alt="Profile" class="user-avatar-image" />
+                    }
+                    else
+                    {
+                        <div class="user-avatar">@GetUserInitials()</div>
+                    }
                     <span class="sidebar-text user-name">@AuthService.CurrentUser?.Name</span>
                 </div>
                 <button class="btn-logout" @onclick="Logout">
@@ -83,23 +90,46 @@
 
 @code {
     private bool isSidebarExpanded = true;
+    private bool _hasInitialized = false;
 
 
     private void ToggleSidebar() => isSidebarExpanded = !isSidebarExpanded;
     
     protected override async Task OnInitializedAsync()
     {
-        // 1. We must await the initialization to ensure the token is
-        // loaded from SessionStorage before we check it.
-        await AuthService.InitializeAsync();
-
-        Console.WriteLine("tokeb = " + AuthService.AuthToken);
-        // 2. Check if the Token string is null or empty
-
+        // Subscribe to auth state changes to update UI when profile changes
+        AuthService.OnAuthStateChanged += StateHasChanged;
     }
-    private void Logout()
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        AuthService.Logout();
+        if (firstRender && !_hasInitialized)
+        {
+            _hasInitialized = true;
+            
+            // Initialize auth after the component has rendered
+            await AuthService.InitializeAsync();
+            
+            Console.WriteLine("token = " + AuthService.AuthToken);
+            
+            // Force a re-render to update the UI with user data
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthService.OnAuthStateChanged -= StateHasChanged;
+    }
+    
+    private void GoToProfile()
+    {
+        Navigation.NavigateTo("/profile");
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.Logout();
         Navigation.NavigateTo("/");
     }
 
@@ -311,7 +341,15 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: background-color 0.2s;
     }
+
+        .user-info:hover {
+            background-color: var(--hover-bg);
+        }
 
     .user-avatar {
         width: 40px;
@@ -325,6 +363,15 @@
         align-items: center;
         justify-content: center;
         font-weight: 700;
+    }
+
+    .user-avatar-image {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #e5e7eb;
     }
 
     .btn-logout {

@@ -262,7 +262,115 @@ else
 
             @* --- PREVIEW PANEL --- *@
             <div class="editor-right-panel" id="resume-preview">
-                <div class="resume-document">
+                <div class="resume-document" style="@(selectedTemplate?.Id == 7 ? "padding: 0; display: flex; flex-direction: row; align-items: stretch; min-height: 11in;" : "")">
+        
+        @if (selectedTemplate?.Id == 7)
+        {
+            @* --- NEW SIDEBAR LAYOUT PREVIEW --- *@
+            <div class="sidebar-left" style="width: 30%; background-color: #EBEBEB; padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                @* Initial Box *@
+                <div style="background-color: @(selectedTemplate?.ColorScheme); color: white; width: 80px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; border: 3px solid white; margin: 0 auto;">
+                    @(string.IsNullOrWhiteSpace(resume.FullName) ? "U" : resume.FullName.Substring(0, 1).ToUpper())
+                </div>
+
+                @* Contact *@
+                <div style="border: 2px solid #ccc; padding: 10px;">
+                    <h3 style="color: @(selectedTemplate?.ColorScheme); margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase;">Contact</h3>
+                    <div style="font-size: 11px; display: flex; flex-direction: column; gap: 5px; word-break: break-word;">
+                        <div>@resume.Email</div>
+                        <div>@resume.Phone</div>
+                        <div>@resume.Address</div>
+                    </div>
+                </div>
+
+                @* Education *@
+                @if (EducationList.Any())
+                {
+                    <div>
+                        <h3 style="color: @(selectedTemplate?.ColorScheme); margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase;">Education</h3>
+                        @foreach (var edu in EducationList)
+                        {
+                            <div style="margin-bottom: 8px; font-size: 11px;">
+                                <strong>@edu.Degree</strong><br/>
+                                @edu.Institution<br/>
+                                <span style="font-style: italic; color: #666;">@edu.StartDate - @edu.EndDate</span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @* Skills *@
+                @if (TechSkillsList.Any())
+                {
+                    <div>
+                        <h3 style="color: @(selectedTemplate?.ColorScheme); margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase;">Skills</h3>
+                        <div style="font-size: 11px;">
+                            @foreach (var skill in TechSkillsList) { <div style="margin-bottom:2px;">• @skill</div> }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="content-right" style="width: 70%; display: flex; flex-direction: column;">
+                @* Header *@
+                <div style="background-color: @(selectedTemplate?.ColorScheme); padding: 30px; text-align: center; color: white;">
+                    <h1 style="margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px;">@(string.IsNullOrWhiteSpace(resume.FullName) ? "John Doe" : resume.FullName)</h1>
+                    <p style="margin: 10px 0 0 0; font-size: 12px; line-height: 1.4;">@StripHtml(resume.Summary ?? "")</p>
+                </div>
+
+                @* Body *@
+                <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px; background-color: white; flex: 1;">
+                    
+                    @* Experience *@
+                    @if (ExperienceList.Any())
+                    {
+                        <div>
+                            <div style="background-color: #D4AF37; color: white; padding: 5px 10px; font-weight: bold; text-transform: uppercase; font-size: 14px; margin-bottom: 10px;">Employment History</div>
+                            @foreach (var exp in ExperienceList)
+                            {
+                                <div style="margin-bottom: 15px; font-size: 12px;">
+                                    <div style="font-weight: bold; font-size: 13px;">@exp.Position</div>
+                                    <div style="color: #444; font-style: italic;">@exp.Company | @exp.StartDate - @exp.EndDate</div>
+                                    <div style="margin-top: 5px; white-space: pre-wrap;">@StripHtml(exp.Description ?? "")</div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @* Projects *@
+                    @if (ProjectList.Any())
+                    {
+                        <div>
+                            <div style="background-color: #D4AF37; color: white; padding: 5px 10px; font-weight: bold; text-transform: uppercase; font-size: 14px; margin-bottom: 10px;">Projects</div>
+                            @foreach (var proj in ProjectList)
+                            {
+                                <div style="margin-bottom: 10px; font-size: 12px;">
+                                    <strong>@proj.Name</strong>
+                                    <div>@StripHtml(proj.Description ?? "")</div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @* Certifications *@
+                    @if (CertList.Any())
+                    {
+                        <div>
+                            <div style="background-color: #D4AF37; color: white; padding: 5px 10px; font-weight: bold; text-transform: uppercase; font-size: 14px; margin-bottom: 10px;">Certifications</div>
+                            @foreach (var item in CertList)
+                            {
+                                <div style="background-color: @(selectedTemplate?.ColorScheme); color: white; padding: 10px; margin-bottom: 5px;">
+                                    <div style="font-weight: bold;">@item.Name</div>
+                                    <div style="font-size: 11px;">@item.Issuer | @item.Date</div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
                     <div class="resume-header" style="border-bottom: 3px solid @(selectedTemplate?.ColorScheme ?? "#2563EB");">
                         <h1 class="resume-name">@(string.IsNullOrWhiteSpace(resume.FullName) ? "John Doe" : resume.FullName)</h1>
                         <div class="resume-contact-row">
@@ -381,7 +489,9 @@ else
                         }
                     </div>
                                         }
+                                        
                 </div>
+                }
             </div>
         </div>
     </div>

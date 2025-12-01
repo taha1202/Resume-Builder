@@ -121,6 +121,52 @@ namespace ResumeBuilder.Services
             OnAuthStateChanged?.Invoke();
             _navigationManager.NavigateTo("/", forceLoad: true);
         }
+
+        public async Task<bool> UpdateUserProfile(string name, string profileImageUrl)
+        {
+            try
+            {
+                if (_currentUser == null || string.IsNullOrEmpty(_authToken))
+                {
+                    return false;
+                }
+
+                var updateData = new
+                {
+                    UserId = _currentUser.UserId,
+                    Name = name,
+                    ProfileImageUrl = profileImageUrl
+                };
+
+                var request = new HttpRequestMessage(HttpMethod.Put, "auth/update-profile");
+                request.Headers.Add("Authorization", $"Bearer {_authToken}");
+                request.Content = JsonContent.Create(updateData);
+
+                var response = await _httpClient.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<UpdateProfileResponse>();
+
+                    // Update current user
+                    _currentUser.Name = result.User.Name;
+                    _currentUser.ProfileImageUrl = result.User.ProfileImageUrl;
+
+                    // Update session storage
+                    await _sessionStorage.SetAsync("currentUser", _currentUser);
+
+                    OnAuthStateChanged?.Invoke();
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Update profile error: {ex.Message}");
+                return false;
+            }
+        }
     }
 
     public class AuthResponse
@@ -128,5 +174,20 @@ namespace ResumeBuilder.Services
         public string Message { get; set; }
         public string Token { get; set; }
         public User User { get; set; }
+    }
+
+    public class UpdateProfileResponse
+    {
+        public string Message { get; set; }
+        public UserResponse User { get; set; }
+    }
+
+    public class UserResponse
+    {
+        public string Id { get; set; }
+        public string UserId { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string ProfileImageUrl { get; set; }
     }
 }

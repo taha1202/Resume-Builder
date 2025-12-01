@@ -106,7 +106,8 @@ namespace ResumeBuilderFunctions
                         id = user.Id,
                         userId = user.UserId,
                         name = user.Name,
-                        email = user.Email
+                        email = user.Email,
+                        profileImageUrl = user.ProfileImageUrl
                     }
                 });
             }
@@ -179,13 +180,86 @@ namespace ResumeBuilderFunctions
                         id = user.Id,
                         userId = user.UserId,
                         name = user.Name,
-                        email = user.Email
+                        email = user.Email,
+                        profileImageUrl = user.ProfileImageUrl
                     }
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error in Login: {ex.Message}");
+                return new StatusCodeResult(500);
+            }
+        }
+
+        [Function("UpdateUserProfile")]
+        public async Task<IActionResult> UpdateUserProfile(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "auth/update-profile")] HttpRequest req)
+        {
+            _logger.LogInformation("Update profile request received");
+
+            try
+            {
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var updateData = JsonConvert.DeserializeObject<UpdateProfileRequest>(requestBody);
+
+                // Validate input
+                if (string.IsNullOrWhiteSpace(updateData?.UserId))
+                {
+                    return new BadRequestObjectResult(new { message = "UserId is required" });
+                }
+
+                // Find user by userId
+                var query = new QueryDefinition("SELECT * FROM c WHERE c.UserId = @userId")
+                    .WithParameter("@userId", updateData.UserId);
+
+                var users = _usersContainer.GetItemQueryIterator<User>(query);
+                User user = null;
+
+                while (users.HasMoreResults)
+                {
+                    var response = await users.ReadNextAsync();
+                    user = response.FirstOrDefault();
+                    if (user != null) break;
+                }
+
+                if (user == null)
+                {
+                    return new NotFoundObjectResult(new { message = "User not found" });
+                }
+
+                // Update user properties
+                if (!string.IsNullOrWhiteSpace(updateData.Name))
+                {
+                    user.Name = updateData.Name;
+                }
+
+                if (!string.IsNullOrWhiteSpace(updateData.ProfileImageUrl))
+                {
+                    user.ProfileImageUrl = updateData.ProfileImageUrl;
+                }
+
+                // Update user in Cosmos DB
+                await _usersContainer.ReplaceItemAsync(user, user.Id, new PartitionKey(user.UserId));
+
+                _logger.LogInformation($"User profile updated successfully: {user.Email}");
+
+                return new OkObjectResult(new
+                {
+                    message = "Profile updated successfully",
+                    user = new
+                    {
+                        id = user.Id,
+                        userId = user.UserId,
+                        name = user.Name,
+                        email = user.Email,
+                        profileImageUrl = user.ProfileImageUrl
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in UpdateUserProfile: {ex.Message}");
                 return new StatusCodeResult(500);
             }
         }
@@ -229,6 +303,13 @@ namespace ResumeBuilderFunctions
         public string Password { get; set; }
     }
 
+    public class UpdateProfileRequest
+    {
+        public string UserId { get; set; }
+        public string Name { get; set; }
+        public string ProfileImageUrl { get; set; }
+    }
+
     public class User
     {
         [JsonProperty("id")]
@@ -245,6 +326,9 @@ namespace ResumeBuilderFunctions
 
         [JsonProperty("passwordHash")]
         public string PasswordHash { get; set; }
+
+        [JsonProperty("profileImageUrl")]
+        public string ProfileImageUrl { get; set; }
 
         [JsonProperty("createdAt")]
         public DateTime CreatedAt { get; set; }
