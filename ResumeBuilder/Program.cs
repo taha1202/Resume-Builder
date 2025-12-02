@@ -15,7 +15,6 @@ builder.Services.AddApplicationInsightsTelemetry();
 // Register custom services
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<AzureBlobService>();
-builder.Services.AddSingleton<PdfService>();
 
 // Configure HttpClient for API calls
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:7234/api/";
@@ -24,6 +23,10 @@ builder.Services.AddHttpClient<ResumeService>(client =>
     client.BaseAddress = new Uri(apiBaseUrl);
 });
 
+builder.Services.AddHttpClient<PdfService>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
 // Add HttpClient for AuthService
 builder.Services.AddHttpClient<AuthService>(client =>
 {

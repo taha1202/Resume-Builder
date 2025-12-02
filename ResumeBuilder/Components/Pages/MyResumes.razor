@@ -80,7 +80,6 @@
                                 PDF
                             </button>
                             
-                            @* Updated to call ConfirmDelete instead of direct delete *@
                             <button class="btn-action btn-danger" @onclick="() => ConfirmDelete(r)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                 Delete
@@ -92,7 +91,7 @@
         }
     }
 
-    @* --- CUSTOM CONFIRMATION MODAL --- *@
+    @* --- DELETE MODAL --- *@
     @if (showDeleteModal)
     {
         <div class="modal-overlay">
@@ -133,7 +132,7 @@
     private bool isDeleting = false;
     private Resume? resumeToDelete;
 
-    // --- Helper Classes ---
+    // --- Helper Classes (Required for Deserialization) ---
     public class EducationEntry { public string Institution { get; set; } = ""; public string Degree { get; set; } = ""; public string FieldOfStudy { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string GPA { get; set; } = ""; }
     public class ExperienceEntry { public string Company { get; set; } = ""; public string Position { get; set; } = ""; public string Location { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string Description { get; set; } = ""; }
     public class ProjectEntry { public string Name { get; set; } = ""; public string Description { get; set; } = ""; public string Technologies { get; set; } = ""; public string Link { get; set; } = ""; }
@@ -142,12 +141,20 @@
     public class VolunteerEntry { public string Organization { get; set; } = ""; public string Role { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string Description { get; set; } = ""; }
     public class ActivityEntry { public string Organization { get; set; } = ""; public string Role { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string Description { get; set; } = ""; }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await AuthService.InitializeAsync();
-        if (string.IsNullOrEmpty(AuthService.AuthToken)) { Navigation.NavigateTo("/"); return; }
-        await LoadResumes();
-        isLoading = false;
+        if (firstRender)
+        {
+            await AuthService.InitializeAsync();
+            if (string.IsNullOrEmpty(AuthService.AuthToken))
+            {
+                Navigation.NavigateTo("/");
+                return;
+            }
+            await LoadResumes();
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task LoadResumes()
@@ -176,20 +183,13 @@
     private async Task ExecuteDelete()
     {
         if (resumeToDelete == null) return;
-
-        isDeleting = true; // Show spinner inside modal button
+        isDeleting = true; 
         StateHasChanged();
-
-        // Simulate small delay so user sees spinner (optional, remove if API is slow enough)
-        // await Task.Delay(500); 
 
         var userId = AuthService.CurrentUser?.Id ?? string.Empty;
         var removed = await ResumeService.DeleteResume(resumeToDelete.Id, userId);
 
-        if (removed)
-        {
-            await LoadResumes();
-        }
+        if (removed) { await LoadResumes(); }
 
         isDeleting = false;
         showDeleteModal = false;
@@ -209,30 +209,64 @@
         try
         {
             var template = ResumeService.GetTemplate(originalResume.TemplateId);
+
+            // Deserialize lists to clean HTML
             var expList = string.IsNullOrEmpty(originalResume.Experience) ? new() : JsonSerializer.Deserialize<List<ExperienceEntry>>(originalResume.Experience) ?? new();
             var cleanExp = expList.Select(e => new ExperienceEntry { Company = e.Company, Position = e.Position, Location = e.Location, StartDate = e.StartDate, EndDate = e.EndDate, Description = StripHtml(e.Description) }).ToList();
+            
             var projList = string.IsNullOrEmpty(originalResume.Projects) ? new() : JsonSerializer.Deserialize<List<ProjectEntry>>(originalResume.Projects) ?? new();
             var cleanProj = projList.Select(p => new ProjectEntry { Name = p.Name, Technologies = p.Technologies, Link = p.Link, Description = StripHtml(p.Description) }).ToList();
+            
             var acadList = string.IsNullOrEmpty(originalResume.Academic) ? new() : JsonSerializer.Deserialize<List<AcademicEntry>>(originalResume.Academic) ?? new();
             var cleanAcad = acadList.Select(a => new AcademicEntry { Name = a.Name, Course = a.Course, Grade = a.Grade, Description = StripHtml(a.Description) }).ToList();
+            
             var volList = string.IsNullOrEmpty(originalResume.Volunteer) ? new() : JsonSerializer.Deserialize<List<VolunteerEntry>>(originalResume.Volunteer) ?? new();
             var cleanVol = volList.Select(v => new VolunteerEntry { Organization = v.Organization, Role = v.Role, StartDate = v.StartDate, EndDate = v.EndDate, Description = StripHtml(v.Description) }).ToList();
+            
             var actList = string.IsNullOrEmpty(originalResume.Activities) ? new() : JsonSerializer.Deserialize<List<ActivityEntry>>(originalResume.Activities) ?? new();
             var cleanAct = actList.Select(a => new ActivityEntry { Organization = a.Organization, Role = a.Role, StartDate = a.StartDate, EndDate = a.EndDate, Description = StripHtml(a.Description) }).ToList();
 
+            // Create temporary Resume object for PDF generation
             var pdfResume = new Resume
             {
-                Id = originalResume.Id, UserId = originalResume.UserId, TemplateId = originalResume.TemplateId, Title = originalResume.Title, FullName = originalResume.FullName, Email = originalResume.Email, Phone = originalResume.Phone, Address = originalResume.Address, LinkedIn = originalResume.LinkedIn, Website = originalResume.Website, Summary = StripHtml(originalResume.Summary ?? ""), Education = originalResume.Education, Certifications = originalResume.Certifications, Skills = originalResume.Skills, SoftSkills = originalResume.SoftSkills,
-                Experience = JsonSerializer.Serialize(cleanExp), Projects = JsonSerializer.Serialize(cleanProj), Academic = JsonSerializer.Serialize(cleanAcad), Volunteer = JsonSerializer.Serialize(cleanVol), Activities = JsonSerializer.Serialize(cleanAct)
+                Id = originalResume.Id,
+                UserId = originalResume.UserId,
+                TemplateId = originalResume.TemplateId,
+                Title = originalResume.Title,
+                FullName = originalResume.FullName,
+                Email = originalResume.Email,
+                Phone = originalResume.Phone,
+                Address = originalResume.Address,
+                LinkedIn = originalResume.LinkedIn,
+                Website = originalResume.Website,
+                Summary = StripHtml(originalResume.Summary ?? ""),
+                
+                // IMPORTANT: Inject the current user's profile image URL so the PDF service can download it
+                ProfileImageUrl = AuthService.CurrentUser?.ProfileImageUrl ?? "",
+                
+                Education = originalResume.Education,
+                Certifications = originalResume.Certifications,
+                Skills = originalResume.Skills,
+                SoftSkills = originalResume.SoftSkills,
+
+                Experience = JsonSerializer.Serialize(cleanExp),
+                Projects = JsonSerializer.Serialize(cleanProj),
+                Academic = JsonSerializer.Serialize(cleanAcad),
+                Volunteer = JsonSerializer.Serialize(cleanVol),
+                Activities = JsonSerializer.Serialize(cleanAct)
             };
 
             var pdfBytes = ResumeService.GeneratePDF(pdfResume, template);
             var base64 = Convert.ToBase64String(pdfBytes);
             var safeName = (string.IsNullOrWhiteSpace(pdfResume.FullName) ? "Resume" : pdfResume.FullName).Replace(" ", "_");
             var fileName = $"{safeName}_Resume.pdf";
+
             await JSRuntime.InvokeVoidAsync("downloadFileFromBase64", fileName, "application/pdf", base64);
         }
-        catch (Exception ex) { Console.WriteLine($"PDF download failed: {ex.Message}"); }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"PDF download failed: {ex.Message}");
+        }
     }
 }
 
@@ -338,7 +372,7 @@
         transition: stroke 0.2s;
     }
 
-    /* --- PAGE LOADER --- */
+    /* --- LOADER --- */
     .loader-wrapper {
         display: flex;
         flex-direction: column;

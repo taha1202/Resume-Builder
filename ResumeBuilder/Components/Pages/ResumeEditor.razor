@@ -1,4 +1,4 @@
-﻿@page "/editor/{TemplateId:int}"
+@page "/editor/{TemplateId:int}"
 @page "/editor/{TemplateId:int}/{ResumeId}"
 @layout EmptyLayout
 @inject ResumeService ResumeService
@@ -9,7 +9,6 @@
 @using System.Text.RegularExpressions
 @using System.Linq
 @using ResumeBuilder.Components
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <PageTitle>Resume Editor - ResumeCloud</PageTitle>
 
@@ -46,7 +45,7 @@ else
                 </span>
             </div>
             <div class="header-right">
-                <button class="btn-header btn-save" @onclick="() => SaveResume(false)" disabled="@isSaving">
+                <button class="btn-header btn-save" @onclick="OpenSaveModal" disabled="@isSaving">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg><span>Save</span>
                 </button>
                 <button class="btn-header btn-preview" @onclick="TogglePreview">
@@ -112,7 +111,7 @@ else
                 {
                     var isT = activeTab == "Tech Skills"; var list = isT ? TechSkillsList : SoftSkillsList; var inp = isT ? newTechSkill : newSoftSkill;
                     <div class="form-section"><h3>@activeTab</h3><div class="skill-input-group"><input type="text" value="@inp" @onchange="@(e => { if (isT) newTechSkill = e.Value?.ToString() ?? ""; else newSoftSkill = e.Value?.ToString() ?? ""; })" @onkeyup="@(e => KeyUpSkill(e, isT ? "Tech" : "Soft"))" class="form-control-styled" placeholder="Add skill and press Enter..." /><button class="btn-add-skill" @onclick="@(() => { if (isT) AddTechSkill(); else AddSoftSkill(); })">Add</button></div><div class="skills-container">@foreach (var s in list) {
-                    <span class="skill-pill">@s <button class="btn-remove-skill" @onclick="() => { if (isT) RemoveTechSkill(s); else RemoveSoftSkill(s); }">×</button></span>
+                    <span class="skill-pill">@s <button class="btn-remove-skill" @onclick="() => { if (isT) RemoveTechSkill(s); else RemoveSoftSkill(s); }">�</button></span>
                 }
 </div></div>
                                 }
@@ -205,14 +204,14 @@ else
                     @if (TechSkillsList.Any())
                     {
                         <div><h3 style="color:@color; font-size:12px; margin-bottom:5px; font-weight:bold;">SKILLS</h3>@foreach(var s in TechSkillsList){
-                        <div style="font-size:10px;">• @s</div>
+                        <div style="font-size:10px;">� @s</div>
                     }
 </div>
                                         }
                     @if (SoftSkillsList.Any())
                     {
                         <div><h3 style="color:@color; font-size:12px; margin-bottom:5px; font-weight:bold;">SOFT SKILLS</h3>@foreach(var s in SoftSkillsList){
-                        <div style="font-size:10px;">• @s</div>
+                        <div style="font-size:10px;">� @s</div>
                     }
 </div>
                                         }
@@ -266,7 +265,14 @@ else
                 {
                     <div style="display:flex; flex-direction:column; width:100%;">
                         <div style="background-color:@color; padding:25px; display:flex; align-items:center; color:white;">
-                            <div style="width:80px; height:80px; background:white; color:@color; display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:bold;">@initials</div>
+                            @if (!string.IsNullOrEmpty(AuthService.CurrentUser?.ProfileImageUrl))
+                            {
+                                <img src="@AuthService.CurrentUser.ProfileImageUrl" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid white;" />
+                            }
+                            else
+                            {
+                                <div style="width:80px; height:80px; background:white; color:@color; display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:bold;">@initials</div>
+                            }
                             <div style="margin-left:20px;">
                                 <h1 style="margin:0; font-size:26px; font-weight:bold;">@(string.IsNullOrWhiteSpace(resume.FullName) ? "JOHN DOE" : resume.FullName.ToUpper())</h1>
                                 <div style="font-size:10px; margin-top:8px; display:flex; gap:15px;">
@@ -295,7 +301,7 @@ else
                                 @if (TechSkillsList.Any())
                                 {
                                     <h4 style="color:@color; margin-bottom:8px; font-weight:bold;">SKILLS</h4>@foreach(var s in TechSkillsList){
-                                    <div style="font-size:10px; margin-bottom:2px;">• @s</div>
+                                    <div style="font-size:10px; margin-bottom:2px;">� @s</div>
                                 }
 }
                             @if (EducationList.Any())
@@ -350,7 +356,14 @@ else
                 {
                     <div style="display:flex; width:100%; min-height:100%;">
                         <div style="width:35%; background-color:@color; color:white; padding:25px; display:flex; flex-direction:column; gap:20px;">
-                            <div style="width:100px; height:100px; background:rgba(255,255,255,0.2); margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:40px; font-weight:bold;">@initials</div>
+                            @if (!string.IsNullOrEmpty(AuthService.CurrentUser?.ProfileImageUrl))
+                            {
+                                <img src="@AuthService.CurrentUser.ProfileImageUrl" style="width:100px; height:100px; border-radius:50%; object-fit:cover; margin:0 auto; border:3px solid rgba(255,255,255,0.3);" />
+                            }
+                            else
+                            {
+                                <div style="width:100px; height:100px; background:rgba(255,255,255,0.2); margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:40px; font-weight:bold;">@initials</div>
+                            }
                             <div>
                                 <h4 style="border-bottom:1px solid rgba(255,255,255,0.5); padding-bottom:5px; margin-bottom:10px;">CONTACT</h4>
                                 <div style="font-size:10px; display:flex; flex-direction:column; gap:8px; word-break:break-word;">
@@ -478,7 +491,7 @@ else
                     @if (ProjectList.Any())
                     {
                         <div><h2 style="color:@color; font-size:12px; font-weight:bold; margin-bottom:5px;">PROJECTS</h2>@foreach(var p in ProjectList){
-                        <div style="margin-bottom:8px; font-size:10px;"><div style="font-weight:bold;">@p.Name <span style="font-weight:normal;font-size:9px;color:@color">@(string.IsNullOrEmpty(p.Link) ? "" : "🔗")</span></div><div style="font-style:italic; color:#555;">@p.Technologies</div><div>@StripHtml(p.Description ?? "")</div></div>
+                        <div style="margin-bottom:8px; font-size:10px;"><div style="font-weight:bold;">@p.Name <span style="font-weight:normal;font-size:9px;color:@color">@(string.IsNullOrEmpty(p.Link) ? "" : "??")</span></div><div style="font-style:italic; color:#555;">@p.Technologies</div><div>@StripHtml(p.Description ?? "")</div></div>
                     }
 </div>
                                         }
@@ -516,6 +529,40 @@ else
         </div>
     </div>
 </div>
+
+@* Save Modal *@
+@if (showSaveModal)
+{
+    <div class="modal-overlay" @onclick="CloseSaveModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>Save Resume</h3>
+                <button class="modal-close" @onclick="CloseSaveModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Resume Title</label>
+                    <input type="text" @bind="resumeTitle" class="form-control-styled" placeholder="Enter resume title" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-cancel" @onclick="CloseSaveModal">Cancel</button>
+                <button class="btn-modal-save" @onclick="() => SaveResumeWithTitle()" disabled="@isSaving">
+                    @if (isSaving)
+                    {
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>Save</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
 }
 
 @code {
@@ -528,6 +575,8 @@ else
     private bool isSaving = false;
     private bool isLoading = true;
     private string lastSaveTime = "";
+    private bool showSaveModal = false;
+    private string resumeTitle = "";
 
     private void TogglePreview() => isPreviewMode = !isPreviewMode;
 
@@ -559,8 +608,8 @@ else
         if (string.IsNullOrEmpty(AuthService.AuthToken)) { Navigation.NavigateTo("/"); return; }
         var currentUserId = AuthService.CurrentUser?.Id;
         selectedTemplate = ResumeService.GetTemplate(TemplateId) ?? new ResumeTemplate { Name = "Modern Template", ColorScheme = "#2563EB" };
-        if (!string.IsNullOrEmpty(ResumeId)) { var existingResume = await ResumeService.GetResume(ResumeId, currentUserId); if (existingResume != null) { resume = existingResume; DeserializeData(); } }
-        else { resume.TemplateId = TemplateId; resume.UserId = AuthService.CurrentUser?.Id ?? "rafay"; resume.Email = AuthService.CurrentUser?.Email ?? ""; resume.FullName = AuthService.CurrentUser?.Name ?? ""; }
+        if (!string.IsNullOrEmpty(ResumeId)) { var existingResume = await ResumeService.GetResume(ResumeId, currentUserId); if (existingResume != null) { resume = existingResume; DeserializeData(); resumeTitle = resume.Title ?? $"{AuthService.CurrentUser?.Name ?? "My"} Resume"; } }
+        else { resume.TemplateId = TemplateId; resume.UserId = AuthService.CurrentUser?.Id ?? "rafay"; resume.Email = AuthService.CurrentUser?.Email ?? ""; resume.FullName = AuthService.CurrentUser?.Name ?? ""; resumeTitle = $"{AuthService.CurrentUser?.Name ?? "My"} Resume"; }
         isLoading = false;
     }
 
@@ -590,11 +639,36 @@ else
         resume.Activities = JsonSerializer.Serialize(ActivityList);
     }
 
+    private void OpenSaveModal()
+    {
+        showSaveModal = true;
+    }
+
+    private void CloseSaveModal()
+    {
+        showSaveModal = false;
+    }
+
+    private async Task SaveResumeWithTitle()
+    {
+        if (string.IsNullOrEmpty(resume.UserId)) return;
+        isSaving = true;
+        StateHasChanged();
+        SerializeData();
+        resume.Title = resumeTitle;
+        await ResumeService.SaveResume(resume);
+        lastSaveTime = DateTime.Now.ToString("h:mm tt");
+        isSaving = false;
+        showSaveModal = false;
+        StateHasChanged();
+    }
+
     private async Task SaveResume(bool silent = false)
     {
         if (string.IsNullOrEmpty(resume.UserId)) return;
         if (!silent) { isSaving = true; StateHasChanged(); }
         SerializeData();
+        if (string.IsNullOrEmpty(resume.Title)) resume.Title = resumeTitle;
         await ResumeService.SaveResume(resume);
         lastSaveTime = DateTime.Now.ToString("h:mm tt");
         if (!silent) { isSaving = false; StateHasChanged(); }
@@ -631,7 +705,8 @@ else
                 Projects = JsonSerializer.Serialize(cleanProj),
                 Academic = JsonSerializer.Serialize(cleanAcad),
                 Volunteer = JsonSerializer.Serialize(cleanVol),
-                Activities = JsonSerializer.Serialize(cleanAct)
+                Activities = JsonSerializer.Serialize(cleanAct),
+                ProfileImageUrl = AuthService.CurrentUser?.ProfileImageUrl
             };
             var pdfBytes = ResumeService.GeneratePDF(pdfResume, selectedTemplate);
             var base64 = Convert.ToBase64String(pdfBytes);
@@ -1106,4 +1181,121 @@ else
             opacity: 0.7;
             cursor: not-allowed;
         }
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @@keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+    .modal-close {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #6b7280;
+        padding: 4px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+        .modal-close:hover {
+            background: #f3f4f6;
+            color: var(--text-dark);
+        }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        padding: 1.5rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .btn-modal-cancel {
+        background: white;
+        border: 1px solid #d1d5db;
+        color: var(--text-dark);
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+        .btn-modal-cancel:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+    .btn-modal-save {
+        background: var(--primary-color);
+        border: none;
+        color: white;
+        padding: 0.625rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+        .btn-modal-save:hover:not(:disabled) {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-modal-save:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
 </style>

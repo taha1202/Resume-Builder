@@ -37,6 +37,8 @@ namespace ResumeBuilder.Models
         public string Volunteer { get; set; } = "[]";
         public string Activities { get; set; } = "[]";
 
+        public string? ProfileImageUrl { get; set; }
+
         // Metadata
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

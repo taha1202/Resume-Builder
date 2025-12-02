@@ -9,6 +9,14 @@ namespace ResumeBuilder.Services
 {
     public class PdfService
     {
+        private readonly HttpClient _httpClient;
+
+        // Inject HttpClient to download the profile image
+        public PdfService(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
         // --- HELPERS ---
         private class PdfEdu { public string Institution { get; set; } = ""; public string Degree { get; set; } = ""; public string FieldOfStudy { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string GPA { get; set; } = ""; }
         private class PdfExp { public string Company { get; set; } = ""; public string Position { get; set; } = ""; public string Location { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string Description { get; set; } = ""; }
@@ -18,7 +26,7 @@ namespace ResumeBuilder.Services
         private class PdfVolunteer { public string Organization { get; set; } = ""; public string Role { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string Description { get; set; } = ""; }
         private class PdfActivity { public string Organization { get; set; } = ""; public string Role { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string Description { get; set; } = ""; }
 
-        // --- ICONS ---
+        // --- ICONS (Feather Style) ---
         private const string IconEmail = @"<path d=""M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"" /><polyline points=""22,6 12,13 2,6"" />";
         private const string IconPhone = @"<path d=""M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"" />";
         private const string IconMap = @"<path d=""M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"" /><circle cx=""12"" cy=""10"" r=""3"" />";
@@ -28,6 +36,18 @@ namespace ResumeBuilder.Services
         public byte[] GenerateResumePDF(Resume resume, ResumeTemplate template)
         {
             QuestPDF.Settings.License = LicenseType.Community;
+
+            // 1. Download Image if URL exists
+            byte[]? userImageBytes = null;
+            if (!string.IsNullOrEmpty(resume.ProfileImageUrl))
+            {
+                try
+                {
+                    // Synchronously block to get the image for PDF generation
+                    userImageBytes = _httpClient.GetByteArrayAsync(resume.ProfileImageUrl).Result;
+                }
+                catch { /* Fallback to initials if download fails */ }
+            }
 
             var document = Document.Create(container =>
             {
@@ -40,9 +60,10 @@ namespace ResumeBuilder.Services
 
                     page.Content().Element(content =>
                     {
-                        if (template.Id == 7) RenderSideBarLayout(content, resume, template);
-                        else if (template.Id == 8) RenderExecutiveProfileLayout(content, resume, template);
-                        else if (template.Id == 9) RenderCreativeDesignerLayout(content, resume, template);
+                        // Pass image bytes to layouts
+                        if (template.Id == 7) RenderSideBarLayout(content, resume, template, userImageBytes);
+                        else if (template.Id == 8) RenderExecutiveProfileLayout(content, resume, template, userImageBytes);
+                        else if (template.Id == 9) RenderCreativeDesignerLayout(content, resume, template, userImageBytes);
                         else RenderStandardLayout(content, resume, template);
                     });
                 });
@@ -51,17 +72,19 @@ namespace ResumeBuilder.Services
             return document.GeneratePdf();
         }
 
-        // --- LAYOUTS ---
-
+        // ==========================================
+        // LAYOUT 1: STANDARD (Template 1-6)
+        // ==========================================
         private void RenderStandardLayout(IContainer container, Resume resume, ResumeTemplate template)
         {
             var mainColor = HexToColor(template.ColorScheme);
             container.Padding(0.75f, Unit.Inch).Column(col =>
             {
                 col.Spacing(12);
-                col.Item().Text(resume.FullName).FontSize(26).Bold().FontColor(Colors.Black).LineHeight(1);
+                // Name: Bold, Black, Larger
+                col.Item().Text(resume.FullName).FontSize(28).Bold().FontColor(Colors.Black).LineHeight(1);
 
-                // Contact (Above Line)
+                // FIX: Contact (Above Line)
                 col.Item().PaddingTop(6).Row(row =>
                 {
                     row.Spacing(15);
@@ -72,12 +95,15 @@ namespace ResumeBuilder.Services
                 col.Item().PaddingTop(10).Height(3).Background(mainColor);
                 col.Item().PaddingBottom(10);
 
-                // FIX: Corrected method name from RenderBodySections to RenderBodyContent
-                RenderBodyContent(col, resume, template, true, false);
+                // false = No Underline for section headers in Standard template
+                RenderBodyContent(col, resume, template, true, false, false); 
             });
         }
 
-        private void RenderSideBarLayout(IContainer container, Resume resume, ResumeTemplate template)
+        // ==========================================
+        // LAYOUT 2: ELEGANT SIDEBAR (Template 7)
+        // ==========================================
+        private void RenderSideBarLayout(IContainer container, Resume resume, ResumeTemplate template, byte[]? image)
         {
             var mainColor = HexToColor(template.ColorScheme);
             var accentColor = HexToColor("#D4AF37");
@@ -89,16 +115,22 @@ namespace ResumeBuilder.Services
                 row.ConstantItem(200).Background(sideBarBg).Padding(15).Column(col =>
                 {
                     col.Spacing(20);
-                    col.Item().AlignCenter().Element(c => DrawInitialsBox(c, resume, mainColor, Colors.White, 80, 3));
+                    // Image or Initials
+                    col.Item().AlignCenter().Element(c => {
+                        if (image != null) DrawUserImage(c, image, 80, 3);
+                        else DrawInitialsBox(c, resume, mainColor, Colors.White, 80, 3);
+                    });
+
                     col.Item().Border(1).BorderColor(Colors.Grey.Lighten1).Padding(10).Column(c =>
                     {
                         c.Spacing(8);
                         c.Item().Text("CONTACT").FontSize(12).FontColor(mainColor).Bold();
                         RenderContactListVertical(c, resume, template.ColorScheme);
                     });
+
                     RenderEducation(col.Item(), resume.Education, template.ColorScheme, true);
                     RenderSkills(col.Item(), "SKILLS", resume.Skills, template.ColorScheme, true);
-                    RenderSkills(col.Item(), "SOFT SKILLS", resume.SoftSkills, template.ColorScheme, true);
+                    if(!string.IsNullOrWhiteSpace(resume.SoftSkills)) RenderSkills(col.Item(), "SOFT SKILLS", resume.SoftSkills, template.ColorScheme, true);
                 });
 
                 // Right Content
@@ -114,6 +146,7 @@ namespace ResumeBuilder.Services
                         body.Spacing(15);
                         void Head(string t) => body.Item().Background(accentColor).PaddingHorizontal(10).PaddingVertical(3).Text(t).FontSize(12).FontColor(Colors.White).Bold();
 
+                        // Render ALL sections in main body
                         if (!string.IsNullOrWhiteSpace(resume.Experience)) { Head("EMPLOYMENT HISTORY"); RenderExperience(body.Item(), resume.Experience, "#000000", false); }
                         if (!string.IsNullOrWhiteSpace(resume.Projects)) { Head("PROJECTS"); RenderProjects(body.Item(), resume.Projects, "#000000", false); }
                         if (!string.IsNullOrWhiteSpace(resume.Certifications)) { Head("CERTIFICATIONS"); RenderCertifications(body.Item(), resume.Certifications, template.ColorScheme, false, true); }
@@ -125,14 +158,22 @@ namespace ResumeBuilder.Services
             });
         }
 
-        private void RenderExecutiveProfileLayout(IContainer container, Resume resume, ResumeTemplate template)
+        // ==========================================
+        // LAYOUT 3: EXECUTIVE PROFILE (Template 8)
+        // ==========================================
+        private void RenderExecutiveProfileLayout(IContainer container, Resume resume, ResumeTemplate template, byte[]? image)
         {
             var mainColor = HexToColor(template.ColorScheme);
             container.Column(col =>
             {
                 col.Item().Background(mainColor).Padding(25).Row(header =>
                 {
-                    header.ConstantItem(80).Element(c => DrawInitialsBox(c, resume, Colors.White, mainColor, 80, 0));
+                    // Image or Initials
+                    header.ConstantItem(80).Element(c => {
+                        if (image != null) DrawUserImage(c, image, 80, 3);
+                        else DrawInitialsBox(c, resume, Colors.White, mainColor, 80, 0);
+                    });
+
                     header.RelativeItem().PaddingLeft(20).Column(info =>
                     {
                         info.Item().Text(resume.FullName.ToUpper()).FontSize(28).FontColor(Colors.White).Bold();
@@ -156,13 +197,16 @@ namespace ResumeBuilder.Services
                     body.RelativeItem().PaddingLeft(25).BorderLeft(1).BorderColor(Colors.Grey.Lighten3).PaddingLeft(25).Column(right =>
                     {
                         right.Spacing(15);
-                        RenderBodyContent(right, resume, template, true, true);
+                        RenderBodyContent(right, resume, template, true, true, true);
                     });
                 });
             });
         }
 
-        private void RenderCreativeDesignerLayout(IContainer container, Resume resume, ResumeTemplate template)
+        // ==========================================
+        // LAYOUT 4: CREATIVE DESIGNER (Template 9)
+        // ==========================================
+        private void RenderCreativeDesignerLayout(IContainer container, Resume resume, ResumeTemplate template, byte[]? image)
         {
             var mainColor = HexToColor(template.ColorScheme);
             container.Row(row =>
@@ -170,7 +214,13 @@ namespace ResumeBuilder.Services
                 row.ConstantItem(210).Background(mainColor).Padding(25).Column(left =>
                 {
                     left.Spacing(25);
-                    left.Item().AlignCenter().Element(c => DrawInitialsBox(c, resume, Colors.White.WithAlpha(50), Colors.White, 90, 0));
+                    
+                    // Image or Initials
+                    left.Item().AlignCenter().Element(c => {
+                        if (image != null) DrawUserImage(c, image, 100, 0);
+                        else DrawInitialsBox(c, resume, Colors.White.WithAlpha(50), Colors.White, 90, 0);
+                    });
+
                     left.Item().Column(c => { c.Item().BorderBottom(1).BorderColor(Colors.White.WithAlpha(128)).PaddingBottom(5).Text("CONTACT").FontSize(11).FontColor(Colors.White).Bold(); c.Item().PaddingTop(10).Column(con => { con.Spacing(8); void Add(string t, string i) { if (!string.IsNullOrWhiteSpace(t)) con.Item().Row(r => { r.ConstantItem(12).Svg(GetIcon(i, "#FFFFFF")); r.RelativeItem().PaddingLeft(5).Text(t).FontSize(9).FontColor(Colors.White); }); } Add(resume.Email, IconEmail); Add(resume.Phone, IconPhone); Add(resume.Address, IconMap); Add(resume.LinkedIn, IconLink); }); });
                     if (!string.IsNullOrWhiteSpace(resume.Skills)) { left.Item().Column(c => { c.Item().BorderBottom(1).BorderColor(Colors.White.WithAlpha(128)).PaddingBottom(5).Text("SKILLS").FontSize(11).FontColor(Colors.White).Bold(); var s = DeserializeList<string>(resume.Skills, true); c.Item().PaddingTop(10).Inlined(i => { i.Spacing(5); i.VerticalSpacing(5); if (s != null) foreach (var sk in s) i.Item().Background(Colors.White.WithAlpha(50)).PaddingVertical(2).PaddingHorizontal(6).Text(sk).FontSize(9).FontColor(Colors.White); }); }); }
                 });
@@ -179,29 +229,28 @@ namespace ResumeBuilder.Services
                     right.Spacing(15);
                     right.Item().Column(c => { c.Item().Text(resume.FullName.ToUpper()).FontSize(32).FontColor(mainColor).Bold(); c.Item().PaddingTop(5).Width(50).Height(4).Background(mainColor); });
                     if (!string.IsNullOrWhiteSpace(resume.Summary)) { right.Item().Text("ABOUT ME").FontSize(11).FontColor(mainColor).Bold(); right.Item().Text(resume.Summary).FontSize(10); }
-                    RenderBodyContent(right, resume, template, true, true);
+                    RenderBodyContent(right, resume, template, true, true, true);
                 });
             });
         }
 
-        // --- SHARED RENDERERS ---
-        private void RenderBodyContent(ColumnDescriptor col, Resume resume, ResumeTemplate template, bool showHeaders, bool skipSidebar = false)
+        // --- SHARED RENDERER CONTROLLER ---
+        private void RenderBodyContent(ColumnDescriptor col, Resume resume, ResumeTemplate template, bool showHeaders, bool skipSidebar = false, bool underlineHeaders = true)
         {
             string color = template.ColorScheme;
-            bool underline = template.Id != 1;
 
-            if (!string.IsNullOrWhiteSpace(resume.Experience)) RenderExperience(col.Item(), resume.Experience, color, showHeaders, underline);
+            if (!string.IsNullOrWhiteSpace(resume.Experience)) RenderExperience(col.Item(), resume.Experience, color, showHeaders, underlineHeaders);
             if (!string.IsNullOrWhiteSpace(resume.Education) && !skipSidebar) RenderEducation(col.Item(), resume.Education, color, false);
-            if (!string.IsNullOrWhiteSpace(resume.Skills) && !skipSidebar) RenderSkills(col.Item(), "TECHNICAL SKILLS", resume.Skills, color, showHeaders, underline);
-            if (!string.IsNullOrWhiteSpace(resume.SoftSkills) && !skipSidebar) RenderSkills(col.Item(), "SOFT SKILLS", resume.SoftSkills, color, showHeaders, underline);
-            if (!string.IsNullOrWhiteSpace(resume.Projects)) RenderProjects(col.Item(), resume.Projects, color, showHeaders, underline);
-            if (!string.IsNullOrWhiteSpace(resume.Certifications)) RenderCertifications(col.Item(), resume.Certifications, color, showHeaders, false, underline);
-            if (!string.IsNullOrWhiteSpace(resume.Academic)) RenderAcademic(col.Item(), resume.Academic, color, showHeaders, underline);
-            if (!string.IsNullOrWhiteSpace(resume.Volunteer)) RenderVolunteer(col.Item(), resume.Volunteer, color, showHeaders, underline);
-            if (!string.IsNullOrWhiteSpace(resume.Activities)) RenderActivities(col.Item(), resume.Activities, color, showHeaders, underline);
+            if (!string.IsNullOrWhiteSpace(resume.Skills) && !skipSidebar) RenderSkills(col.Item(), "TECHNICAL SKILLS", resume.Skills, color, showHeaders, underlineHeaders);
+            if (!string.IsNullOrWhiteSpace(resume.SoftSkills) && !skipSidebar) RenderSkills(col.Item(), "SOFT SKILLS", resume.SoftSkills, color, showHeaders, underlineHeaders);
+            if (!string.IsNullOrWhiteSpace(resume.Projects)) RenderProjects(col.Item(), resume.Projects, color, showHeaders, underlineHeaders);
+            if (!string.IsNullOrWhiteSpace(resume.Certifications)) RenderCertifications(col.Item(), resume.Certifications, color, showHeaders, false, underlineHeaders);
+            if (!string.IsNullOrWhiteSpace(resume.Academic)) RenderAcademic(col.Item(), resume.Academic, color, showHeaders, underlineHeaders);
+            if (!string.IsNullOrWhiteSpace(resume.Volunteer)) RenderVolunteer(col.Item(), resume.Volunteer, color, showHeaders, underlineHeaders);
+            if (!string.IsNullOrWhiteSpace(resume.Activities)) RenderActivities(col.Item(), resume.Activities, color, showHeaders, underlineHeaders);
         }
 
-        // --- COMPONENT RENDERERS ---
+        // --- SECTION RENDERERS ---
         private void RenderExperience(IContainer container, string json, string colorHex, bool showHeader, bool underline = true)
         {
             var list = DeserializeList<PdfExp>(json);
@@ -300,7 +349,6 @@ namespace ResumeBuilder.Services
             });
         }
 
-        // Explicit Generic Calls
         private void RenderAcademic(IContainer c, string j, string h, bool u, bool under = true) => RenderGeneric<PdfAcademic>(c, j, h, "ACADEMIC", u, under, i => i.Name, i => i.Description, i => { string t = i.Course; if (!string.IsNullOrWhiteSpace(i.Grade)) t += $" • Grade: {i.Grade}"; return t; });
         private void RenderVolunteer(IContainer c, string j, string h, bool u, bool under = true) => RenderGeneric<PdfVolunteer>(c, j, h, "VOLUNTEER", u, under, i => i.Organization, i => i.Description, i => $"{i.Role} ({i.StartDate}-{i.EndDate})".Replace("()", "").Trim());
         private void RenderActivities(IContainer c, string j, string h, bool u, bool under = true) => RenderGeneric<PdfActivity>(c, j, h, "ACTIVITIES", u, under, i => i.Organization, i => i.Description, i => $"{i.Role} ({i.StartDate}-{i.EndDate})".Replace("()", "").Trim());
@@ -322,7 +370,7 @@ namespace ResumeBuilder.Services
             });
         }
 
-        // --- UTILS ---
+        // --- UTILITIES ---
         private void AddSectionTitle(ColumnDescriptor col, string title, string colorHex, bool underline)
         {
             col.Item().PaddingBottom(4).Column(c => {
@@ -343,6 +391,14 @@ namespace ResumeBuilder.Services
             var box = container.Width(size).Height(size).Background(bgColor);
             if (border > 0) box = box.Border(border).BorderColor(Colors.White);
             box.AlignCenter().AlignMiddle().Text(initials).FontSize(size / 2.5f).FontColor(textColor).Bold();
+        }
+        
+        private void DrawUserImage(IContainer container, byte[] imageBytes, float size, float border = 0)
+        {
+            var box = container.Width(size).Height(size);
+            if (border > 0) box = box.Border(border).BorderColor(Colors.White);
+            // FitArea maintains aspect ratio while filling the square
+            box.Image(imageBytes).FitArea();
         }
 
         private string GetIcon(string path, string colorHex) => $@"<svg viewBox=""0 0 24 24"" fill=""none"" stroke=""{colorHex}"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round"" xmlns=""http://www.w3.org/2000/svg"">{path}</svg>";
