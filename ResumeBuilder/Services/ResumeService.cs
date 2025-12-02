@@ -68,7 +68,7 @@ namespace ResumeBuilder.Services
 
         // --- PDF GENERATION (Local) ---
 
-        public async Task<byte[]> GeneratePDF(Resume resume, ResumeTemplate? template)
+        public byte[] GeneratePDF(Resume resume, ResumeTemplate? template)
         {
             if (template == null) template = GetTemplate(resume.TemplateId) ?? _templates.First();
             return _pdfService.GenerateResumePDF(resume, template);
@@ -83,12 +83,11 @@ namespace ResumeBuilder.Services
             _templates.AddRange(new List<ResumeTemplate>
             {
                 new ResumeTemplate { Id = 1, Name = "Modern Template", Description = "Clean and professional design with blue accents", ColorScheme = "#2563EB" },
-                // new ResumeTemplate { Id = 2, Name = "Executive Template", Description = "Bold and sophisticated with navy color scheme", ColorScheme = "#1e3a8a" },
-                // new ResumeTemplate { Id = 3, Name = "Creative Template", Description = "Vibrant and eye-catching with purple theme", ColorScheme = "#7c3aed" },
                 new ResumeTemplate { Id = 4, Name = "Minimal Template", Description = "Simple and elegant with dark gray accents", ColorScheme = "#374151" },
-                // new ResumeTemplate { Id = 5, Name = "Tech Template", Description = "Modern tech-focused with teal highlights", ColorScheme = "#0d9488" },
                 new ResumeTemplate { Id = 6, Name = "Professional Template", Description = "Traditional business style with green accents", ColorScheme = "#059669" },
-                new ResumeTemplate { Id = 7, Name = "Elegant Side-Bar", Description = "Modern two-column layout with maroon and gold accents", ColorScheme = "#7D2129" }
+                new ResumeTemplate { Id = 7, Name = "Elegant Side-Bar", Description = "Modern two-column layout with maroon and gold accents", ColorScheme = "#7D2129" },
+                new ResumeTemplate { Id = 8, Name = "Executive Profile", Description = "Professional header with circular photo and teal theme", ColorScheme = "#0F766E" },
+                new ResumeTemplate { Id = 9, Name = "Creative Designer", Description = "Bold asymmetric design with photo and purple accents", ColorScheme = "#7C3AED" }
             });
         }
     }

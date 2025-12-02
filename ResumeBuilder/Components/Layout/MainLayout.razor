@@ -95,7 +95,7 @@
 
     private void ToggleSidebar() => isSidebarExpanded = !isSidebarExpanded;
     
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         // Subscribe to auth state changes to update UI when profile changes
         AuthService.OnAuthStateChanged += StateHasChanged;

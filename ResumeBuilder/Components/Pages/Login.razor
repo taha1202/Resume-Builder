@@ -5,52 +5,101 @@
 <PageTitle>Login - ResumeCloud</PageTitle>
 
 <div class="auth-page">
+    <div class="auth-bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+    </div>
+    
     <div class="auth-container">
-        <div class="auth-header">
-            <div class="auth-icon">📄</div>
-            <h2>Welcome Back</h2>
-            <p>Sign in to your account</p>
-        </div>
-
-        <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
-            <div class="form-group">
-                <label>Email</label>
-                <InputText @bind-Value="loginModel.Email" class="form-control" placeholder="your@email.com" />
+        <div class="auth-card">
+            <a href="/" class="auth-logo">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                <span>ResumeCloud</span>
+            </a>
+            
+            <div class="auth-header">
+                <h2>Welcome Back!</h2>
+                <p>Sign in to continue building your career</p>
             </div>
 
-            <div class="form-group">
-                <label>Password</label>
-                <InputText type="password" @bind-Value="loginModel.Password" class="form-control" placeholder="••••••••" />
-            </div>
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" class="auth-form">
+                <div class="form-group">
+                    <label>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        Email Address
+                    </label>
+                    <InputText @bind-Value="loginModel.Email" class="form-control-modern" placeholder="Enter your email" />
+                </div>
 
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="error-message">@errorMessage</div>
-            }
+                <div class="form-group">
+                    <label>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        Password
+                    </label>
+                    <InputText type="password" @bind-Value="loginModel.Password" class="form-control-modern" placeholder="Enter your password" />
+                </div>
 
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button type="submit" class="btn-submit" disabled="@isLoading">
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert-error">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        @errorMessage
+                    </div>
+                }
+
+                <button type="submit" class="btn-submit-modern" disabled="@isLoading">
                     @if (isLoading)
                     {
+                        <div class="spinner-small"></div>
                         <span>Signing in...</span>
                     }
                     else
                     {
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                            <polyline points="10 17 15 12 10 7"></polyline>
+                            <line x1="15" y1="12" x2="3" y2="12"></line>
+                        </svg>
                         <span>Sign In</span>
                     }
                 </button>
+            </EditForm>
 
-                @* <button type="button" class="btn-secondary" @onclick="UseDemoAccount" disabled="@isLoading">
-                    Use Demo Account
-                </button> *@
+            <div class="auth-divider">
+                <span>New to ResumeCloud?</span>
             </div>
-        </EditForm>
 
-        <p class="auth-footer">
-            Don't have an account? <a href="/signup">Sign up</a>
-        </p>
+            <a href="/signup" class="btn-link-modern">
+                Create an account
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
 
-        <a href="/" class="back-link">← Back to Home</a>
+            <a href="/" class="back-link-modern">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to Home
+            </a>
+        </div>
     </div>
 </div>
 

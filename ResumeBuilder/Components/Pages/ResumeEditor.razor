@@ -15,7 +15,6 @@
 
 @if (isLoading)
 {
-    @* --- LOADING SCREEN --- *@
     <div class="loader-wrapper">
         <div class="spinner"></div>
         <span class="loading-text">Loading editor...</span>
@@ -23,10 +22,9 @@
 }
 else
 {
-    @* --- MAIN EDITOR UI (Only shows when loaded) --- *@
     <div class="editor-page-container @(isPreviewMode ? "preview-active" : "")">
 
-        @* --- HEADER SECTION --- *@
+        @* --- HEADER --- *@
         <div class="editor-top-header">
             <div class="header-left">
                 <button class="btn-back" @onclick="GoBack">
@@ -35,8 +33,6 @@ else
                 </button>
                 <div class="header-divider"></div>
                 <h2>@selectedTemplate?.Name</h2>
-
-                @* --- SAVE STATUS INDICATOR --- *@
                 <span class="save-status">
                     @if (isSaving)
                     {
@@ -44,40 +40,35 @@ else
                     }
                     else if (!string.IsNullOrEmpty(lastSaveTime))
                     {
+
                         <span class="status-saved">Saved @lastSaveTime</span>
                     }
                 </span>
             </div>
-
             <div class="header-right">
-                @* --- MANUAL SAVE BUTTON --- *@
                 <button class="btn-header btn-save" @onclick="() => SaveResume(false)" disabled="@isSaving">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
-                    <span>Save</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg><span>Save</span>
                 </button>
-
                 <button class="btn-header btn-preview" @onclick="TogglePreview">
                     @if (isPreviewMode)
                     {
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                         <span>Edit</span>
-                    }
+     }
                     else
                     {
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
                         <span>Preview</span>
-                    }
+     }
                 </button>
-
                 <button class="btn-header btn-download" @onclick="DownloadPDF">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
-                    <span>Download PDF</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg><span>Download PDF</span>
                 </button>
             </div>
         </div>
 
-        @* --- MAIN CONTENT --- *@
         <div class="editor-main-content">
+            @* --- LEFT PANEL (FORM) --- *@
             <div class="editor-left-panel">
                 <div class="tab-navigation-container">
                     <div class="tab-navigation-wrap">
@@ -94,441 +85,449 @@ else
                         <div class="form-section">
                             <h3>Personal Information</h3>
                             <div class="form-group"><label>Full Name *</label><input type="text" @bind="resume.FullName" class="form-control-styled" placeholder="John Doe" /></div>
-                            <div class="form-row">
-                                <div class="form-col"><div class="form-group"><label>Email *</label><input type="email" @bind="resume.Email" class="form-control-styled" placeholder="john@example.com" /></div></div>
-                                <div class="form-col"><div class="form-group"><label>Phone *</label><input type="tel" @bind="resume.Phone" class="form-control-styled" placeholder="0312..." /></div></div>
-                            </div>
-                            <div class="form-group"><label>Location *</label><input type="text" @bind="resume.Address" class="form-control-styled" placeholder="New York, NY" /></div>
-                            <div class="form-row">
-                                <div class="form-col"><div class="form-group"><label>LinkedIn</label><input type="text" @bind="resume.LinkedIn" class="form-control-styled" /></div></div>
-                                <div class="form-col"><div class="form-group"><label>Website</label><input type="text" @bind="resume.Website" class="form-control-styled" /></div></div>
-                            </div>
+                            <div class="form-row"><div class="form-col"><div class="form-group"><label>Email *</label><input type="email" @bind="resume.Email" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Phone *</label><input type="tel" @bind="resume.Phone" class="form-control-styled" /></div></div></div>
+                            <div class="form-group"><label>Location *</label><input type="text" @bind="resume.Address" class="form-control-styled" /></div>
+                            <div class="form-row"><div class="form-col"><div class="form-group"><label>LinkedIn</label><input type="text" @bind="resume.LinkedIn" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Website</label><input type="text" @bind="resume.Website" class="form-control-styled" /></div></div></div>
                         </div>
                     }
-
                     @if (activeTab == "Summary")
                     {
                         <div class="form-section"><h3>Professional Summary</h3><div class="form-group"><label>Summary</label><RichTextEditor @bind-Value="resume.Summary" /></div></div>
                     }
-
                     @if (activeTab == "Education")
                     {
-                        <div class="form-section">
-                            <div class="section-header-row"><h3>Education</h3><button class="btn-add" @onclick="AddEducationEntry">+ Add Education</button></div>
-                            @foreach (var edu in EducationList)
-                            {
-                                <div class="entry-card">
-                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(edu.Institution) ? "New Education" : edu.Institution)</span><button class="btn-icon-delete" @onclick="() => RemoveEducation(edu)">🗑</button></div>
-                                    <div class="entry-card-body">
-                                        <div class="form-group"><label>Institution</label><input type="text" @bind="edu.Institution" class="form-control-styled" /></div>
-                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Degree</label><input type="text" @bind="edu.Degree" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Field of Study</label><input type="text" @bind="edu.FieldOfStudy" class="form-control-styled" /></div></div></div>
-                                        <div class="form-row three-col"><div class="form-col"><div class="form-group"><label>Start Date</label><input type="text" @bind="edu.StartDate" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>End Date</label><input type="text" @bind="edu.EndDate" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>GPA</label><input type="text" @bind="edu.GPA" class="form-control-styled" /></div></div></div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
+                        <div class="form-section"><div class="section-header-row"><h3>Education</h3><button class="btn-add" @onclick="AddEducationEntry">+ Add</button></div>@foreach (var e in EducationList) {
+                        <div class="entry-card"><div class="entry-card-body"><div class="form-group"><input @bind="e.Institution" placeholder="Institution" class="form-control-styled mb-2" /></div><div class="form-row"><div class="form-col"><input @bind="e.Degree" placeholder="Degree" class="form-control-styled" /></div><div class="form-col"><input @bind="e.FieldOfStudy" placeholder="Field" class="form-control-styled" /></div></div><div class="form-row three-col"><div class="form-col"><input @bind="e.StartDate" placeholder="Start" class="form-control-styled" /></div><div class="form-col"><input @bind="e.EndDate" placeholder="End" class="form-control-styled" /></div><div class="form-col"><input @bind="e.GPA" placeholder="GPA" class="form-control-styled" /></div></div></div><button class="btn-icon-delete full-width" @onclick="() => RemoveEducation(e)">Remove Entry</button></div>
                     }
+    </div>
+                }
+                @if (activeTab == "Experience")
+                {
+                    <div class="form-section"><div class="section-header-row"><h3>Work Experience</h3><button class="btn-add" @onclick="AddExperienceEntry">+ Add</button></div>@foreach (var e in ExperienceList) {
+                    <div class="entry-card"><div class="entry-card-body"><div class="form-row"><div class="form-col"><input @bind="e.Company" placeholder="Company" class="form-control-styled" /></div><div class="form-col"><input @bind="e.Position" placeholder="Position" class="form-control-styled" /></div></div><div class="form-group"><input @bind="e.Location" placeholder="Location" class="form-control-styled mt-2" /></div><div class="form-row"><div class="form-col"><input @bind="e.StartDate" placeholder="Start Date" class="form-control-styled" /></div><div class="form-col"><input @bind="e.EndDate" placeholder="End Date" class="form-control-styled" /></div></div><div class="form-group mt-2"><label>Description</label><RichTextEditor @bind-Value="e.Description" /></div></div><button class="btn-icon-delete full-width" @onclick="() => RemoveExperience(e)">Remove Entry</button></div>
+                }
+</div>
+                                }
+                @if (activeTab == "Tech Skills" || activeTab == "Soft Skills")
+                {
+                    var isT = activeTab == "Tech Skills"; var list = isT ? TechSkillsList : SoftSkillsList; var inp = isT ? newTechSkill : newSoftSkill;
+                    <div class="form-section"><h3>@activeTab</h3><div class="skill-input-group"><input type="text" value="@inp" @onchange="@(e => { if (isT) newTechSkill = e.Value?.ToString() ?? ""; else newSoftSkill = e.Value?.ToString() ?? ""; })" @onkeyup="@(e => KeyUpSkill(e, isT ? "Tech" : "Soft"))" class="form-control-styled" placeholder="Add skill and press Enter..." /><button class="btn-add-skill" @onclick="@(() => { if (isT) AddTechSkill(); else AddSoftSkill(); })">Add</button></div><div class="skills-container">@foreach (var s in list) {
+                    <span class="skill-pill">@s <button class="btn-remove-skill" @onclick="() => { if (isT) RemoveTechSkill(s); else RemoveSoftSkill(s); }">×</button></span>
+                }
+</div></div>
+                                }
+                @if (activeTab == "Projects")
+                {
+                    <div class="form-section"><div class="section-header-row"><h3>Projects</h3><button class="btn-add" @onclick="AddProjectEntry">+ Add</button></div>@foreach (var p in ProjectList) {
+                    <div class="entry-card"><div class="entry-card-body"><div class="form-group"><input @bind="p.Name" placeholder="Project Name" class="form-control-styled" /></div><div class="form-group"><input @bind="p.Technologies" placeholder="Technologies used" class="form-control-styled" /></div><div class="form-group"><label>Description</label><RichTextEditor @bind-Value="p.Description" /></div><div class="form-group"><input @bind="p.Link" placeholder="Link URL" class="form-control-styled" /></div></div><button class="btn-icon-delete full-width" @onclick="() => RemoveProject(p)">Remove Entry</button></div>
+                }
+</div>
+                                }
+                @if (activeTab == "Certifications")
+                {
+                    <div class="form-section"><div class="section-header-row"><h3>Certifications</h3><button class="btn-add" @onclick="AddCertEntry">+ Add</button></div>@foreach (var c in CertList) {
+                    <div class="entry-card"><div class="entry-card-body"><div class="form-row"><div class="form-col"><input @bind="c.Name" placeholder="Certificate Name" class="form-control-styled" /></div><div class="form-col"><input @bind="c.Issuer" placeholder="Issuer" class="form-control-styled" /></div></div><div class="form-row mt-2"><div class="form-col"><input @bind="c.Date" placeholder="Date" class="form-control-styled" /></div><div class="form-col"><input @bind="c.Link" placeholder="Link URL" class="form-control-styled" /></div></div></div><button class="btn-icon-delete full-width" @onclick="() => RemoveCert(c)">Remove Entry</button></div>
+                }
+</div>
+                                }
+                @if (activeTab == "Academic")
+                {
+                    <div class="form-section"><div class="section-header-row"><h3>Academic Projects</h3><button class="btn-add" @onclick="AddAcademicEntry">+ Add</button></div>@foreach (var a in AcademicList) {
+                    <div class="entry-card"><div class="entry-card-body"><div class="form-group"><input @bind="a.Name" placeholder="Project Name" class="form-control-styled" /></div><div class="form-group"><input @bind="a.Course" placeholder="Course / Subject" class="form-control-styled" /></div><div class="form-group"><input @bind="a.Grade" placeholder="Grade (Optional)" class="form-control-styled" /></div><div class="form-group"><label>Description</label><RichTextEditor @bind-Value="a.Description" /></div></div><button class="btn-icon-delete full-width" @onclick="() => RemoveAcademic(a)">Remove Entry</button></div>
+                }
+</div>
+                                }
+                @if (activeTab == "Volunteer")
+                {
+                    <div class="form-section"><div class="section-header-row"><h3>Volunteer Work</h3><button class="btn-add" @onclick="AddVolunteerEntry">+ Add</button></div>@foreach (var v in VolunteerList) {
+                    <div class="entry-card"><div class="entry-card-body"><div class="form-row"><div class="form-col"><input @bind="v.Organization" placeholder="Organization" class="form-control-styled" /></div><div class="form-col"><input @bind="v.Role" placeholder="Role" class="form-control-styled" /></div></div><div class="form-row mt-2"><div class="form-col"><input @bind="v.StartDate" placeholder="Start Date" class="form-control-styled" /></div><div class="form-col"><input @bind="v.EndDate" placeholder="End Date" class="form-control-styled" /></div></div><div class="form-group mt-2"><label>Description</label><RichTextEditor @bind-Value="v.Description" /></div></div><button class="btn-icon-delete full-width" @onclick="() => RemoveVolunteer(v)">Remove Entry</button></div>
+                }
+</div>
+                                }
+                @if (activeTab == "Activities")
+                {
+                    <div class="form-section"><div class="section-header-row"><h3>Activities</h3><button class="btn-add" @onclick="AddActivityEntry">+ Add</button></div>@foreach (var a in ActivityList) {
+                    <div class="entry-card"><div class="entry-card-body"><div class="form-group"><input @bind="a.Organization" placeholder="Organization / Activity" class="form-control-styled" /></div><div class="form-group"><input @bind="a.Role" placeholder="Role / Position" class="form-control-styled" /></div><div class="form-row mt-2"><div class="form-col"><input @bind="a.StartDate" placeholder="Start Date" class="form-control-styled" /></div><div class="form-col"><input @bind="a.EndDate" placeholder="End Date" class="form-control-styled" /></div></div><div class="form-group mt-2"><label>Description</label><RichTextEditor @bind-Value="a.Description" /></div></div><button class="btn-icon-delete full-width" @onclick="() => RemoveActivity(a)">Remove Entry</button></div>
+                }
+</div>
+                                }
+            </div>
+        </div>
 
-                    @if (activeTab == "Experience")
-                    {
-                        <div class="form-section">
-                            <div class="section-header-row"><h3>Work Experience</h3><button class="btn-add" @onclick="AddExperienceEntry">+ Add Experience</button></div>
-                            @foreach (var exp in ExperienceList)
-                            {
-                                <div class="entry-card">
-                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(exp.Company) ? "New Position" : exp.Company)</span><button class="btn-icon-delete" @onclick="() => RemoveExperience(exp)">🗑</button></div>
-                                    <div class="entry-card-body">
-                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Company</label><input type="text" @bind="exp.Company" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Position</label><input type="text" @bind="exp.Position" class="form-control-styled" /></div></div></div>
-                                        <div class="form-group"><label>Location</label><input type="text" @bind="exp.Location" class="form-control-styled" /></div>
-                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Start Date</label><input type="text" @bind="exp.StartDate" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>End Date</label><input type="text" @bind="exp.EndDate" class="form-control-styled" /></div></div></div>
-                                        <div class="form-group"><label>Description</label><RichTextEditor @bind-Value="exp.Description" /></div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
+        @* === RIGHT PANEL (PREVIEW) === *@
+        <div class="editor-right-panel" id="resume-preview">
+            <div class="resume-document" style="@GetTemplateContainerStyle()">
+                @{
+                    string color = selectedTemplate?.ColorScheme ?? "#2563EB";
+                    string initials = string.IsNullOrWhiteSpace(resume.FullName) ? "U" : resume.FullName.Substring(0, 1).ToUpper();
 
-                    @if (activeTab == "Tech Skills" || activeTab == "Soft Skills")
-                    {
-                        var isTech = activeTab == "Tech Skills"; var currentList = isTech ? TechSkillsList : SoftSkillsList; var currentInput = isTech ? newTechSkill : newSoftSkill;
-                        <div class="form-section">
-                            <h3>@activeTab</h3>
-                            <div class="skill-input-group">
-                                <input type="text" value="@currentInput" @onchange="@(e => { if (isTech) newTechSkill = e.Value?.ToString() ?? ""; else newSoftSkill = e.Value?.ToString() ?? ""; })" @onkeyup="@(e => KeyUpSkill(e, isTech ? "Tech" : "Soft"))" class="form-control-styled" placeholder="Add skill and press Enter..." />
-                                <button class="btn-add-skill" @onclick="@(() => { if (isTech) AddTechSkill(); else AddSoftSkill(); })">Add</button>
-                            </div>
-                            <div class="skills-container">
-                                @foreach (var skill in currentList)
+                    // Icons matching PDF logic exactly
+                    RenderFragment Icon(string p, string c) => @<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="@c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="@p" /></svg>;
+                    string pEmail = "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6";
+                    string pPhone = "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z";
+                    string pMap = "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6";
+                    string pLink = "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71 M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71";
+                    string pGlobe = "M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z M2 12h20";
+                }
+
+                @if (selectedTemplate?.Id == 7) // SIDEBAR (TEMPLATE 7)
+                {
+                    <div class="sidebar-left" style="width:30%; background-color:#EBEBEB; padding:20px; display:flex; flex-direction:column; gap:20px;">
+                        <div style="background-color:@color; color:white; width:70px; height:90px; display:flex; align-items:center; justify-content:center; font-size:36px; font-weight:bold; border:3px solid white; margin:0 auto;">@initials</div>
+                        <div style="border:1px solid #ccc; padding:10px;">
+                            <h3 style="color:@color; margin:0 0 8px 0; font-size:12px; font-weight:bold;">CONTACT</h3>
+                            <div style="font-size:10px; display:flex; flex-direction:column; gap:5px; word-break:break-word;">
+                                @if (!string.IsNullOrEmpty(resume.Email))
                                 {
-                                    <span class="skill-pill">@skill <button class="btn-remove-skill" @onclick="() => { if (isTech) RemoveTechSkill(skill); else RemoveSoftSkill(skill); }">×</button></span>
+                                    <div style="display:flex; gap:5px; align-items:center;">@Icon(pEmail, color) <span>@resume.Email</span></div>
+                                }
+                                @if (!string.IsNullOrEmpty(resume.Phone))
+                                {
+                                    <div style="display:flex; gap:5px; align-items:center;">@Icon(pPhone, color) <span>@resume.Phone</span></div>
+                                }
+                                @if (!string.IsNullOrEmpty(resume.Address))
+                                {
+                                    <div style="display:flex; gap:5px; align-items:center;">@Icon(pMap, color) <span>@resume.Address</span></div>
+                                }
+                                @if (!string.IsNullOrEmpty(resume.LinkedIn))
+                                {
+                                    <div style="display:flex; gap:5px; align-items:center;">@Icon(pLink, color) <span>@resume.LinkedIn</span></div>
                                 }
                             </div>
                         </div>
+                        @if (EducationList.Any())
+                        {
+                            <div><h3 style="color:@color; font-size:12px; margin-bottom:5px; font-weight:bold;">EDUCATION</h3>@foreach(var e in EducationList){
+                            <div style="font-size:10px; margin-bottom:8px;"><strong>@e.Degree</strong><br />@e.Institution<br /><span style="color:#666;font-style:italic">@e.StartDate - @e.EndDate</span></div>
+                        }
+    </div>
                     }
-
-                    @if (activeTab == "Projects")
+                    @if (TechSkillsList.Any())
                     {
-                        <div class="form-section">
-                            <div class="section-header-row"><h3>Projects</h3><button class="btn-add" @onclick="AddProjectEntry">+ Add Project</button></div>
-                            @foreach (var proj in ProjectList)
-                            {
-                                <div class="entry-card">
-                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(proj.Name) ? "New Project" : proj.Name)</span><button class="btn-icon-delete" @onclick="() => RemoveProject(proj)">🗑</button></div>
-                                    <div class="entry-card-body">
-                                        <div class="form-group"><label>Project Name</label><input type="text" @bind="proj.Name" class="form-control-styled" /></div>
-                                        <div class="form-group"><label>Technologies</label><input type="text" @bind="proj.Technologies" class="form-control-styled" /></div>
-                                        <div class="form-group"><label>Description</label><RichTextEditor @bind-Value="proj.Description" /></div>
-                                        <div class="form-group"><label>Link</label><input type="text" @bind="proj.Link" class="form-control-styled" /></div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
+                        <div><h3 style="color:@color; font-size:12px; margin-bottom:5px; font-weight:bold;">SKILLS</h3>@foreach(var s in TechSkillsList){
+                        <div style="font-size:10px;">• @s</div>
                     }
-
-                    @if (activeTab == "Certifications")
+</div>
+                                        }
+                    @if (SoftSkillsList.Any())
                     {
-                        <div class="form-section">
-                            <div class="section-header-row"><h3>Certifications</h3><button class="btn-add" @onclick="AddCertEntry">+ Add Certification</button></div>
-                            @foreach (var cert in CertList)
-                            {
-                                <div class="entry-card">
-                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(cert.Name) ? "New Certification" : cert.Name)</span><button class="btn-icon-delete" @onclick="() => RemoveCert(cert)">🗑</button></div>
-                                    <div class="entry-card-body">
-                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Name</label><input type="text" @bind="cert.Name" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Organization</label><input type="text" @bind="cert.Issuer" class="form-control-styled" /></div></div></div>
-                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Date</label><input type="text" @bind="cert.Date" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Link</label><input type="text" @bind="cert.Link" class="form-control-styled" /></div></div></div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
+                        <div><h3 style="color:@color; font-size:12px; margin-bottom:5px; font-weight:bold;">SOFT SKILLS</h3>@foreach(var s in SoftSkillsList){
+                        <div style="font-size:10px;">• @s</div>
                     }
-
-                    @if (activeTab == "Academic")
-                    {
-                        <div class="form-section">
-                            <div class="section-header-row"><h3>Academic Projects</h3><button class="btn-add" @onclick="AddAcademicEntry">+ Add Academic Project</button></div>
-                            @foreach (var item in AcademicList)
-                            {
-                                <div class="entry-card">
-                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(item.Name) ? "New Project" : item.Name)</span><button class="btn-icon-delete" @onclick="() => RemoveAcademic(item)">🗑</button></div>
-                                    <div class="entry-card-body">
-                                        <div class="form-group"><label>Project Name *</label><input type="text" @bind="item.Name" class="form-control-styled" /></div>
-                                        <div class="form-group"><label>Course/Subject *</label><input type="text" @bind="item.Course" class="form-control-styled" /></div>
-                                        <div class="form-group"><label>Grade (Optional)</label><input type="text" @bind="item.Grade" class="form-control-styled" /></div>
-                                        <div class="form-group"><label>Description *</label><RichTextEditor @bind-Value="item.Description" /></div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-
-                    @if (activeTab == "Volunteer")
-                    {
-                        <div class="form-section">
-                            <div class="section-header-row"><h3>Volunteer Work</h3><button class="btn-add" @onclick="AddVolunteerEntry">+ Add Volunteer</button></div>
-                            @foreach (var item in VolunteerList)
-                            {
-                                <div class="entry-card">
-                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(item.Organization) ? "New Volunteer" : item.Organization)</span><button class="btn-icon-delete" @onclick="() => RemoveVolunteer(item)">🗑</button></div>
-                                    <div class="entry-card-body">
-                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Organization *</label><input type="text" @bind="item.Organization" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>Role *</label><input type="text" @bind="item.Role" class="form-control-styled" /></div></div></div>
-                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Start Date *</label><input type="text" @bind="item.StartDate" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>End Date</label><input type="text" @bind="item.EndDate" class="form-control-styled" /></div></div></div>
-                                        <div class="form-group"><label>Responsibilities & Achievements</label><RichTextEditor @bind-Value="item.Description" /></div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-
-                    @if (activeTab == "Activities")
-                    {
-                        <div class="form-section">
-                            <div class="section-header-row"><h3>Extracurricular Activities</h3><button class="btn-add" @onclick="AddActivityEntry">+ Add Activity</button></div>
-                            @foreach (var item in ActivityList)
-                            {
-                                <div class="entry-card">
-                                    <div class="entry-card-header"><span class="entry-title">@(string.IsNullOrEmpty(item.Organization) ? "New Activity" : item.Organization)</span><button class="btn-icon-delete" @onclick="() => RemoveActivity(item)">🗑</button></div>
-                                    <div class="entry-card-body">
-                                        <div class="form-group"><label>Activity/Organization *</label><input type="text" @bind="item.Organization" class="form-control-styled" /></div>
-                                        <div class="form-group"><label>Role/Position *</label><input type="text" @bind="item.Role" class="form-control-styled" /></div>
-                                        <div class="form-row"><div class="form-col"><div class="form-group"><label>Start Date *</label><input type="text" @bind="item.StartDate" class="form-control-styled" /></div></div><div class="form-col"><div class="form-group"><label>End Date</label><input type="text" @bind="item.EndDate" class="form-control-styled" /></div></div></div>
-                                        <div class="form-group"><label>Description</label><RichTextEditor @bind-Value="item.Description" /></div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
+</div>
+                                        }
                 </div>
-            </div>
-
-            @* --- PREVIEW PANEL --- *@
-            <div class="editor-right-panel" id="resume-preview">
-                <div class="resume-document" style="@(selectedTemplate?.Id == 7 ? "padding: 0; display: flex; flex-direction: row; align-items: stretch; min-height: 11in;" : "")">
-        
-        @if (selectedTemplate?.Id == 7)
-        {
-            @* --- NEW SIDEBAR LAYOUT PREVIEW --- *@
-            <div class="sidebar-left" style="width: 30%; background-color: #EBEBEB; padding: 20px; display: flex; flex-direction: column; gap: 20px;">
-                @* Initial Box *@
-                <div style="background-color: @(selectedTemplate?.ColorScheme); color: white; width: 80px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; border: 3px solid white; margin: 0 auto;">
-                    @(string.IsNullOrWhiteSpace(resume.FullName) ? "U" : resume.FullName.Substring(0, 1).ToUpper())
-                </div>
-
-                @* Contact *@
-                <div style="border: 2px solid #ccc; padding: 10px;">
-                    <h3 style="color: @(selectedTemplate?.ColorScheme); margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase;">Contact</h3>
-                    <div style="font-size: 11px; display: flex; flex-direction: column; gap: 5px; word-break: break-word;">
-                        <div>@resume.Email</div>
-                        <div>@resume.Phone</div>
-                        <div>@resume.Address</div>
+                <div class="content-right" style="width:70%; display:flex; flex-direction:column;">
+                    <div style="background-color:@color; padding:30px; text-align:center; color:white;">
+                        <h1 style="margin:0; font-size:34px; font-weight:bold; letter-spacing:1px;">@(string.IsNullOrWhiteSpace(resume.FullName) ? "JOHN DOE" : resume.FullName.ToUpper())</h1>
+                        <p style="margin:10px 0 0 0; font-size:10px;">@StripHtml(resume.Summary ?? "")</p>
+                    </div>
+                    <div style="padding:20px; background:white; flex:1;">
+                        @if (ExperienceList.Any())
+                        {
+                            <div style="background:#D4AF37; color:white; padding:2px 10px; font-weight:bold; font-size:12px; margin-bottom:10px;">EMPLOYMENT HISTORY</div>@foreach(var e in ExperienceList){
+                            <div style="font-size:11px; margin-bottom:15px;"><strong>@e.Position</strong><br /><span style="font-style:italic;color:#555;">@e.Company | @e.StartDate - @e.EndDate</span><div style="margin-top:2px;">@StripHtml(e.Description ?? "")</div></div>
+                        }
+}
+                        @if (ProjectList.Any())
+                        {
+                            <div style="background:#D4AF37; color:white; padding:2px 10px; font-weight:bold; font-size:12px; margin-bottom:10px; margin-top:20px;">PROJECTS</div>@foreach(var p in ProjectList){
+                            <div style="font-size:11px; margin-bottom:10px;"><strong>@p.Name</strong><br /><span style="font-style:italic;color:#555;">@p.Technologies</span><div style="margin-top:2px;">@StripHtml(p.Description ?? "")</div></div>
+                        }
+}
+                        @if (CertList.Any())
+                        {
+                            <div style="background:#D4AF37; color:white; padding:2px 10px; font-weight:bold; font-size:12px; margin-bottom:10px; margin-top:20px;">CERTIFICATIONS</div>@foreach(var c in CertList){
+                            <div style="background:@color; color:white; padding:5px; font-size:10px; margin-bottom:5px;"><strong>@c.Name</strong><br />@c.Issuer</div>
+                        }
+}
+                        @if (VolunteerList.Any())
+                        {
+                            <div style="background:#D4AF37; color:white; padding:2px 10px; font-weight:bold; font-size:12px; margin-bottom:10px; margin-top:20px;">VOLUNTEER</div>@foreach(var v in VolunteerList){
+                            <div style="font-size:11px; margin-bottom:10px;"><strong>@v.Organization</strong><br />@v.Role<div style="margin-top:2px;">@StripHtml(v.Description ?? "")</div></div>
+                        }
+}
+                        @if (AcademicList.Any())
+                        {
+                            <div style="background:#D4AF37; color:white; padding:2px 10px; font-weight:bold; font-size:12px; margin-bottom:10px; margin-top:20px;">ACADEMIC</div>@foreach(var a in AcademicList){
+                            <div style="font-size:11px; margin-bottom:10px;"><strong>@a.Name</strong><br />@a.Course<div style="margin-top:2px;">@StripHtml(a.Description ?? "")</div></div>
+                        }
+}
+                        @if (ActivityList.Any())
+                        {
+                            <div style="background:#D4AF37; color:white; padding:2px 10px; font-weight:bold; font-size:12px; margin-bottom:10px; margin-top:20px;">ACTIVITIES</div>@foreach(var a in ActivityList){
+                            <div style="font-size:11px; margin-bottom:10px;"><strong>@a.Organization</strong><br />@a.Role<div style="margin-top:2px;">@StripHtml(a.Description ?? "")</div></div>
+                        }
+}
                     </div>
                 </div>
-
-                @* Education *@
-                @if (EducationList.Any())
+                                }
+                                else if (selectedTemplate?.Id == 8) // EXECUTIVE (TEMPLATE 8)
                 {
-                    <div>
-                        <h3 style="color: @(selectedTemplate?.ColorScheme); margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase;">Education</h3>
-                        @foreach (var edu in EducationList)
-                        {
-                            <div style="margin-bottom: 8px; font-size: 11px;">
-                                <strong>@edu.Degree</strong><br/>
-                                @edu.Institution<br/>
-                                <span style="font-style: italic; color: #666;">@edu.StartDate - @edu.EndDate</span>
+                    <div style="display:flex; flex-direction:column; width:100%;">
+                        <div style="background-color:@color; padding:25px; display:flex; align-items:center; color:white;">
+                            <div style="width:80px; height:80px; background:white; color:@color; display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:bold;">@initials</div>
+                            <div style="margin-left:20px;">
+                                <h1 style="margin:0; font-size:26px; font-weight:bold;">@(string.IsNullOrWhiteSpace(resume.FullName) ? "JOHN DOE" : resume.FullName.ToUpper())</h1>
+                                <div style="font-size:10px; margin-top:8px; display:flex; gap:15px;">
+                                    @if (!string.IsNullOrEmpty(resume.Email))
+                                    {
+                                        <span style="display:flex; gap:4px; align-items:center;">@Icon(pEmail, "white") @resume.Email</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(resume.Phone))
+                                    {
+                                        <span style="display:flex; gap:4px; align-items:center;">@Icon(pPhone, "white") @resume.Phone</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(resume.Address))
+                                    {
+                                        <span style="display:flex; gap:4px; align-items:center;">@Icon(pMap, "white") @resume.Address</span>
+                                    }
+                                </div>
                             </div>
+                        </div>
+                        <div style="display:flex; padding:25px; flex:1;">
+                            <div style="width:35%; padding-right:20px; border-right:1px solid #eee;">
+                                @if (!string.IsNullOrEmpty(resume.Summary))
+                                {
+                                    <h4 style="color:@color; margin-bottom:5px; font-weight:bold;">PROFILE</h4>
+                                    <p style="font-size:10px; margin-bottom:15px;">@StripHtml(resume.Summary)</p>
+    }
+                                @if (TechSkillsList.Any())
+                                {
+                                    <h4 style="color:@color; margin-bottom:8px; font-weight:bold;">SKILLS</h4>@foreach(var s in TechSkillsList){
+                                    <div style="font-size:10px; margin-bottom:2px;">• @s</div>
+                                }
+}
+                            @if (EducationList.Any())
+                            {
+                                <h4 style="color:@color; margin-top:20px; margin-bottom:8px; font-weight:bold;">EDUCATION</h4>@foreach(var e in EducationList){
+                                <div style="font-size:10px; margin-bottom:8px;"><strong>@e.Degree</strong><br />@e.Institution</div>
+                            }
+}
+                        </div>
+                        <div style="width:65%; padding-left:20px;">
+                            @if (ExperienceList.Any())
+                            {
+                                <h4 style="color:@color; margin-bottom:10px; font-weight:bold;">EXPERIENCE</h4>@foreach(var e in ExperienceList){
+                                <div style="font-size:11px; margin-bottom:15px;"><strong>@e.Position</strong><br /><span style="color:#666;font-style:italic">@e.Company | @e.StartDate - @e.EndDate</span><div style="margin-top:3px;">@StripHtml(e.Description ?? "")</div></div>
+                            }
+}
+                            @if (ProjectList.Any())
+                            {
+                                <h4 style="color:@color; margin-bottom:10px; margin-top:20px; font-weight:bold;">PROJECTS</h4>@foreach(var p in ProjectList){
+                                <div style="font-size:11px; margin-bottom:10px;"><strong>@p.Name</strong><div style="margin-top:3px;">@StripHtml(p.Description ?? "")</div></div>
+                            }
+}
+                            @if (CertList.Any())
+                            {
+                                <h4 style="color:@color; margin-bottom:10px; margin-top:20px; font-weight:bold;">CERTIFICATIONS</h4>@foreach(var c in CertList){
+                                <div style="font-size:11px; margin-bottom:10px;"><strong>@c.Name</strong> - @c.Issuer</div>
+                            }
+}
+                            @if (VolunteerList.Any())
+                            {
+                                <h4 style="color:@color; margin-bottom:10px; margin-top:20px; font-weight:bold;">VOLUNTEER</h4>@foreach(var v in VolunteerList){
+                                <div style="font-size:11px; margin-bottom:10px;"><strong>@v.Organization</strong><br />@v.Role</div>
+                            }
+}
+                            @if (AcademicList.Any())
+                            {
+                                <h4 style="color:@color; margin-bottom:10px; margin-top:20px; font-weight:bold;">ACADEMIC</h4>@foreach(var a in AcademicList){
+                                <div style="font-size:11px; margin-bottom:10px;"><strong>@a.Name</strong><br />@a.Course</div>
+                            }
+}
+                            @if (ActivityList.Any())
+                            {
+                                <h4 style="color:@color; margin-bottom:10px; margin-top:20px; font-weight:bold;">ACTIVITIES</h4>@foreach(var a in ActivityList){
+                                <div style="font-size:11px; margin-bottom:10px;"><strong>@a.Organization</strong><br />@a.Role</div>
+                            }
+}
+                        </div>
+                    </div>
+                </div>
+                                }
+                                else if (selectedTemplate?.Id == 9) // CREATIVE (TEMPLATE 9)
+                {
+                    <div style="display:flex; width:100%; min-height:100%;">
+                        <div style="width:35%; background-color:@color; color:white; padding:25px; display:flex; flex-direction:column; gap:20px;">
+                            <div style="width:100px; height:100px; background:rgba(255,255,255,0.2); margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:40px; font-weight:bold;">@initials</div>
+                            <div>
+                                <h4 style="border-bottom:1px solid rgba(255,255,255,0.5); padding-bottom:5px; margin-bottom:10px;">CONTACT</h4>
+                                <div style="font-size:10px; display:flex; flex-direction:column; gap:8px; word-break:break-word;">
+                                    @if (!string.IsNullOrEmpty(resume.Email))
+                                    {
+                                        <div style="display:flex; gap:5px; align-items:center;">@Icon(pEmail, "white") @resume.Email</div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(resume.Phone))
+                                    {
+                                        <div style="display:flex; gap:5px; align-items:center;">@Icon(pPhone, "white") @resume.Phone</div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(resume.Address))
+                                    {
+                                        <div style="display:flex; gap:5px; align-items:center;">@Icon(pMap, "white") @resume.Address</div>
+                                    }
+                                </div>
+                            </div>
+                            @if (TechSkillsList.Any())
+                            {
+                                <div><h4 style="border-bottom:1px solid rgba(255,255,255,0.5); padding-bottom:5px; margin-bottom:10px;">SKILLS</h4><div style="display:flex; flex-wrap:wrap; gap:5px;">@foreach(var s in TechSkillsList){
+                                <span style="background:rgba(255,255,255,0.2); padding:2px 6px; font-size:10px;">@s</span>
+                            }
+    </div></div>
                         }
                     </div>
-                }
-
-                @* Skills *@
-                @if (TechSkillsList.Any())
+                    <div style="width:65%; padding:30px; background:white;">
+                        <h1 style="color:@color; font-size:30px; margin:0 0 5px 0; font-weight:bold;">@(string.IsNullOrWhiteSpace(resume.FullName) ? "JOHN DOE" : resume.FullName.ToUpper())</h1>
+                        <div style="width:50px; height:4px; background:@color; margin-bottom:20px;"></div>
+                        @if (!string.IsNullOrEmpty(resume.Summary))
+                        {
+                            <h4 style="color:@color; margin-bottom:5px; font-weight:bold;">ABOUT ME</h4>
+                            <p style="font-size:10px; margin-bottom:20px;">@StripHtml(resume.Summary)</p>
+}
+                        @if (ExperienceList.Any())
+                        {
+                            <h4 style="color:@color; margin-bottom:10px; font-weight:bold;">EXPERIENCE</h4>@foreach(var e in ExperienceList){
+                            <div style="font-size:11px; margin-bottom:15px;"><strong>@e.Position</strong><br />@e.Company<div style="margin-top:3px;">@StripHtml(e.Description ?? "")</div></div>
+                        }
+}
+                        @if (ProjectList.Any())
+                        {
+                            <h4 style="color:@color; margin-bottom:10px; margin-top:20px; font-weight:bold;">PROJECTS</h4>@foreach(var p in ProjectList){
+                            <div style="font-size:11px; margin-bottom:10px;"><strong>@p.Name</strong><br />@p.Technologies<div style="margin-top:3px;">@StripHtml(p.Description ?? "")</div></div>
+                        }
+}
+                        @if (AcademicList.Any())
+                        {
+                            <h4 style="color:@color; margin-bottom:10px; margin-top:20px; font-weight:bold;">ACADEMIC</h4>@foreach(var a in AcademicList){
+                            <div style="font-size:11px; margin-bottom:10px;"><strong>@a.Name</strong><br />@a.Course</div>
+                        }
+}
+                        @if (VolunteerList.Any())
+                        {
+                            <h4 style="color:@color; margin-bottom:10px; margin-top:20px; font-weight:bold;">VOLUNTEER</h4>@foreach(var v in VolunteerList){
+                            <div style="font-size:11px; margin-bottom:10px;"><strong>@v.Organization</strong><br />@v.Role</div>
+                        }
+}
+                        @if (ActivityList.Any())
+                        {
+                            <h4 style="color:@color; margin-bottom:10px; margin-top:20px; font-weight:bold;">ACTIVITIES</h4>@foreach(var a in ActivityList){
+                            <div style="font-size:11px; margin-bottom:10px;"><strong>@a.Organization</strong><br />@a.Role</div>
+                        }
+}
+                    </div>
+                </div>
+                                }
+                                else // STANDARD (TEMPLATE 1-6)
                 {
-                    <div>
-                        <h3 style="color: @(selectedTemplate?.ColorScheme); margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase;">Skills</h3>
-                        <div style="font-size: 11px;">
-                            @foreach (var skill in TechSkillsList) { <div style="margin-bottom:2px;">• @skill</div> }
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <div class="content-right" style="width: 70%; display: flex; flex-direction: column;">
-                @* Header *@
-                <div style="background-color: @(selectedTemplate?.ColorScheme); padding: 30px; text-align: center; color: white;">
-                    <h1 style="margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px;">@(string.IsNullOrWhiteSpace(resume.FullName) ? "John Doe" : resume.FullName)</h1>
-                    <p style="margin: 10px 0 0 0; font-size: 12px; line-height: 1.4;">@StripHtml(resume.Summary ?? "")</p>
-                </div>
-
-                @* Body *@
-                <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px; background-color: white; flex: 1;">
-                    
-                    @* Experience *@
-                    @if (ExperienceList.Any())
-                    {
-                        <div>
-                            <div style="background-color: #D4AF37; color: white; padding: 5px 10px; font-weight: bold; text-transform: uppercase; font-size: 14px; margin-bottom: 10px;">Employment History</div>
-                            @foreach (var exp in ExperienceList)
+                    <div style="border-bottom:3px solid @color; padding-bottom:15px; margin-bottom:20px;">
+                        <h1 style="margin:0 0 10px 0; font-size:32px; font-weight:bold; color:black;">@(string.IsNullOrWhiteSpace(resume.FullName) ? "John Doe" : resume.FullName)</h1>
+                        @* Contact Info ABOVE the line *@
+                        <div style="display:flex; gap:15px; flex-wrap:wrap; color:#4B5563; font-size:10px;">
+                            <span style="display:flex; align-items:center; gap:4px;">@Icon(pEmail, "#6B7280") @resume.Email</span>
+                            @if (!string.IsNullOrEmpty(resume.Phone))
                             {
-                                <div style="margin-bottom: 15px; font-size: 12px;">
-                                    <div style="font-weight: bold; font-size: 13px;">@exp.Position</div>
-                                    <div style="color: #444; font-style: italic;">@exp.Company | @exp.StartDate - @exp.EndDate</div>
-                                    <div style="margin-top: 5px; white-space: pre-wrap;">@StripHtml(exp.Description ?? "")</div>
-                                </div>
+                                <span style="display:flex; align-items:center; gap:4px;">@Icon(pPhone, "#6B7280") @resume.Phone</span>
                             }
-                        </div>
-                    }
-
-                    @* Projects *@
-                    @if (ProjectList.Any())
-                    {
-                        <div>
-                            <div style="background-color: #D4AF37; color: white; padding: 5px 10px; font-weight: bold; text-transform: uppercase; font-size: 14px; margin-bottom: 10px;">Projects</div>
-                            @foreach (var proj in ProjectList)
+                            @if (!string.IsNullOrEmpty(resume.Address))
                             {
-                                <div style="margin-bottom: 10px; font-size: 12px;">
-                                    <strong>@proj.Name</strong>
-                                    <div>@StripHtml(proj.Description ?? "")</div>
-                                </div>
+                                <span style="display:flex; align-items:center; gap:4px;">@Icon(pMap, "#6B7280") @resume.Address</span>
                             }
-                        </div>
-                    }
-
-                    @* Certifications *@
-                    @if (CertList.Any())
-                    {
-                        <div>
-                            <div style="background-color: #D4AF37; color: white; padding: 5px 10px; font-weight: bold; text-transform: uppercase; font-size: 14px; margin-bottom: 10px;">Certifications</div>
-                            @foreach (var item in CertList)
+                            @if (!string.IsNullOrEmpty(resume.LinkedIn))
                             {
-                                <div style="background-color: @(selectedTemplate?.ColorScheme); color: white; padding: 10px; margin-bottom: 5px;">
-                                    <div style="font-weight: bold;">@item.Name</div>
-                                    <div style="font-size: 11px;">@item.Issuer | @item.Date</div>
-                                </div>
+                                <span style="display:flex; align-items:center; gap:4px;">@Icon(pLink, "#6B7280") LinkedIn</span>
                             }
-                        </div>
-                    }
-                </div>
-            </div>
-        }
-        else
-        {
-                    <div class="resume-header" style="border-bottom: 3px solid @(selectedTemplate?.ColorScheme ?? "#2563EB");">
-                        <h1 class="resume-name">@(string.IsNullOrWhiteSpace(resume.FullName) ? "John Doe" : resume.FullName)</h1>
-                        <div class="resume-contact-row">
-                            <span class="contact-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg> @(string.IsNullOrWhiteSpace(resume.Email) ? "email@example.com" : resume.Email)</span>
-                            @if (!string.IsNullOrWhiteSpace(resume.Phone))
+                            @if (!string.IsNullOrEmpty(resume.Website))
                             {
-                                <span class="contact-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg> @resume.Phone</span>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(resume.Address))
-                            {
-                                <span class="contact-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg> @resume.Address</span>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(resume.LinkedIn))
-                            {
-                                <a href="@(resume.LinkedIn.StartsWith("http") ? resume.LinkedIn : "https://" + resume.LinkedIn)" target="_blank" class="contact-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect x="2" y="9" width="4" height="12" /><circle cx="4" cy="4" r="2" /></svg> @resume.LinkedIn</a>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(resume.Website))
-                            {
-                                <a href="@(resume.Website.StartsWith("http") ? resume.Website : "https://" + resume.Website)" target="_blank" class="contact-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg> @resume.Website</a>
+                                <span style="display:flex; align-items:center; gap:4px;">@Icon(pGlobe, "#6B7280") Website</span>
                             }
                         </div>
                     </div>
-
-                    <div class="resume-body">
+                    <div style="display:flex; flex-direction:column; gap:15px;">
                         @if (!string.IsNullOrWhiteSpace(resume.Summary))
                         {
-                            <div class="resume-section"><h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">PROFESSIONAL SUMMARY</h2><div class="section-content">@((MarkupString)resume.Summary)</div></div>
-                        }
-                        @if (TechSkillsList.Any())
-                        {
-                            <div class="resume-section">
-                                <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">TECHNICAL SKILLS</h2><div class="skills-pill-container">
-                                    @foreach (var skill in TechSkillsList)
-                                    {
-                                        <span class="preview-skill-pill" style="color:@(selectedTemplate?.ColorScheme ?? "#2563EB"); background-color:@(selectedTemplate?.ColorScheme ?? "#2563EB")1A; border: 1px solid @(selectedTemplate?.ColorScheme ?? "#2563EB")33;">@skill</span>
-                                    }
-                                </div>
-                            </div>
-                        }
-                        @if (SoftSkillsList.Any())
-                        {
-                            <div class="resume-section">
-                                <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">SOFT SKILLS</h2><div class="skills-pill-container">
-                                    @foreach (var skill in SoftSkillsList)
-                                    {
-                                        <span class="preview-skill-pill" style="color:@(selectedTemplate?.ColorScheme ?? "#2563EB"); background-color:@(selectedTemplate?.ColorScheme ?? "#2563EB")1A; border: 1px solid @(selectedTemplate?.ColorScheme ?? "#2563EB")33;">@skill</span>
-                                    }
-                                </div>
-                            </div>
+                            <div><h2 style="color:@color; font-size:12px; font-weight:bold; margin-bottom:5px;">PROFESSIONAL SUMMARY</h2><div style="font-size:10px; line-height:1.4;">@StripHtml(resume.Summary)</div></div>
                         }
                         @if (ExperienceList.Any())
                         {
-                            <div class="resume-section">
-                                <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">EXPERIENCE</h2>@foreach (var item in ExperienceList) {
-                                <div class="preview-item"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>@item.Position</span><span>@item.StartDate - @item.EndDate</span></div><div style="font-style:italic;">@item.Company @(!string.IsNullOrEmpty(item.Location) ? $"• {item.Location}" : "")</div><div class="preserve-formatting">@((MarkupString)item.Description)</div></div>
-                            }
-                        </div>
+                            <div><h2 style="color:@color; font-size:12px; font-weight:bold; margin-bottom:5px;">EXPERIENCE</h2>@foreach(var e in ExperienceList){
+                            <div style="margin-bottom:10px; font-size:10px;"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>@e.Position</span><span>@e.StartDate - @e.EndDate</span></div><div style="color:#666; font-style:italic">@e.Company | @e.Location</div><div style="margin-top:2px;">@StripHtml(e.Description ?? "")</div></div>
+                        }
+    </div>
                     }
                     @if (EducationList.Any())
                     {
-                        <div class="resume-section">
-                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">EDUCATION</h2>@foreach (var item in EducationList) {
-                            <div class="preview-item"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>@item.Institution</span><span>@item.StartDate - @item.EndDate</span></div><div>@item.Degree in @item.FieldOfStudy @(!string.IsNullOrEmpty(item.GPA) ? $"• GPA: {item.GPA}" : "")</div></div>
-                        }
-                    </div>
+                        <div><h2 style="color:@color; font-size:12px; font-weight:bold; margin-bottom:5px;">EDUCATION</h2>@foreach(var item in EducationList){
+                        <div style="margin-bottom:8px; font-size:10px;"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>@item.Institution</span><span>@item.StartDate - @item.EndDate</span></div><div>@item.Degree in @item.FieldOfStudy</div></div>
+                    }
+</div>
+                                        }
+                    @if (TechSkillsList.Any())
+                    {
+                        <div><h2 style="color:@color; font-size:12px; font-weight:bold; margin-bottom:5px;">TECHNICAL SKILLS</h2><div style="display:flex; flex-wrap:wrap; gap:5px;">@foreach(var s in TechSkillsList){
+                        <span style="background:#f3f4f6; padding:2px 8px; font-size:9px; border-radius:4px; color:#374151;">@s</span>
+                    }
+</div></div>
+                                        }
+                    @if (SoftSkillsList.Any())
+                    {
+                        <div><h2 style="color:@color; font-size:12px; font-weight:bold; margin-bottom:5px;">SOFT SKILLS</h2><div style="display:flex; flex-wrap:wrap; gap:5px;">@foreach(var s in SoftSkillsList){
+                        <span style="background:#f3f4f6; padding:2px 8px; font-size:9px; border-radius:4px; color:#374151;">@s</span>
+                    }
+</div></div>
                                         }
                     @if (ProjectList.Any())
                     {
-                        <div class="resume-section">
-                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">PROJECTS</h2>@foreach (var item in ProjectList) {
-                            <div class="preview-item">
-                                <div style="font-weight:bold;">
-                                    @item.Name @if(!string.IsNullOrEmpty(item.Link)) {
-                                    <a href="@(item.Link.StartsWith("http") ? item.Link : "https://" + item.Link)" target="_blank" style="font-size:0.8em; font-weight:normal; margin-left:5px;">(Link 🔗)</a>
-                                }
-                            </div><div class="preserve-formatting">@((MarkupString)item.Description)</div>@if (!string.IsNullOrEmpty(item.Technologies)) {
-                            <div style="font-size:0.85em; color:#666;">Tech: @item.Technologies</div>
-                                                        }
-                        </div>
-                                                }
-                    </div>
+                        <div><h2 style="color:@color; font-size:12px; font-weight:bold; margin-bottom:5px;">PROJECTS</h2>@foreach(var p in ProjectList){
+                        <div style="margin-bottom:8px; font-size:10px;"><div style="font-weight:bold;">@p.Name <span style="font-weight:normal;font-size:9px;color:@color">@(string.IsNullOrEmpty(p.Link) ? "" : "🔗")</span></div><div style="font-style:italic; color:#555;">@p.Technologies</div><div>@StripHtml(p.Description ?? "")</div></div>
+                    }
+</div>
                                         }
                     @if (CertList.Any())
                     {
-                        <div class="resume-section">
-                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">CERTIFICATIONS</h2>@foreach (var item in CertList) {
-                            <div class="preview-item">
-                                <strong>@item.Name</strong> | @item.Issuer (@item.Date) @if(!string.IsNullOrEmpty(item.Link)){
-                                <a href="@(item.Link.StartsWith("http") ? item.Link : "https://" + item.Link)" target="_blank" style="margin-left:5px;">🔗</a>
-                            }
-                        </div>
-                                                }
-                    </div>
+                        <div><h2 style="color:@color; font-size:12px; font-weight:bold; margin-bottom:5px;">CERTIFICATIONS</h2>@foreach(var c in CertList){
+                        <div style="margin-bottom:5px; font-size:10px;"><strong>@c.Name</strong> - @c.Issuer (@c.Date)</div>
+                    }
+</div>
                                         }
                     @if (AcademicList.Any())
                     {
-                        <div class="resume-section">
-                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">ACADEMIC ACHIEVEMENTS</h2>@foreach (var item in AcademicList) {
-                            <div class="preview-item"><div style="font-weight:bold;">@item.Name</div><div style="font-style:italic;">@item.Course @(!string.IsNullOrEmpty(item.Grade) ? $"• Grade: {item.Grade}" : "")</div><div class="preserve-formatting">@((MarkupString)item.Description)</div></div>
-                        }
-                    </div>
+                        <div><h2 style="color:@color; font-size:12px; font-weight:bold; margin-bottom:5px;">ACADEMIC ACHIEVEMENTS</h2>@foreach(var a in AcademicList){
+                        <div style="margin-bottom:8px; font-size:10px;"><strong>@a.Name</strong><br />@a.Course</div>
+                    }
+</div>
                                         }
                     @if (VolunteerList.Any())
                     {
-                        <div class="resume-section">
-                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">VOLUNTEER EXPERIENCE</h2>@foreach (var item in VolunteerList) {
-                            <div class="preview-item"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>@item.Organization</span><span>@item.StartDate - @item.EndDate</span></div><div style="font-style:italic;">@item.Role</div><div class="preserve-formatting">@((MarkupString)item.Description)</div></div>
-                        }
-                    </div>
+                        <div><h2 style="color:@color; font-size:12px; font-weight:bold; margin-bottom:5px;">VOLUNTEER EXPERIENCE</h2>@foreach(var v in VolunteerList){
+                        <div style="margin-bottom:8px; font-size:10px;"><strong>@v.Organization</strong><br />@v.Role (@v.StartDate - @v.EndDate)</div>
+                    }
+</div>
                                         }
                     @if (ActivityList.Any())
                     {
-                        <div class="resume-section">
-                            <h2 class="section-title" style="color: @(selectedTemplate?.ColorScheme ?? "#2563EB");">ACTIVITIES & INTERESTS</h2>@foreach (var item in ActivityList) {
-                            <div class="preview-item"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>@item.Organization</span><span>@item.StartDate - @item.EndDate</span></div><div style="font-style:italic;">@item.Role</div><div class="preserve-formatting">@((MarkupString)item.Description)</div></div>
-                        }
-                    </div>
+                        <div><h2 style="color:@color; font-size:12px; font-weight:bold; margin-bottom:5px;">ACTIVITIES & INTERESTS</h2>@foreach(var a in ActivityList){
+                        <div style="margin-bottom:8px; font-size:10px;"><strong>@a.Organization</strong><br />@a.Role</div>
+                    }
+</div>
                                         }
-                                        
                 </div>
-                }
+                                }
             </div>
         </div>
     </div>
-
-    @* --- TITLE MODAL --- *@
-    @if (showTitleModal)
-    {
-        <div class="modal-overlay" @onclick="() => showTitleModal = false">
-            <div class="modal-content" @onclick:stopPropagation="true">
-                <h3>Save Resume</h3>
-                <p>Enter a title for your resume:</p>
-                <input type="text" @bind="tempResumeTitle" class="modal-input" placeholder="My Resume" @onkeydown="HandleTitleKeyDown" />
-                <div class="modal-actions">
-                    <button class="modal-btn modal-btn-cancel" @onclick="() => showTitleModal = false">Cancel</button>
-                    <button class="modal-btn modal-btn-save" @onclick="SaveWithTitle">Save</button>
-                </div>
-            </div>
-        </div>
-    }
 </div>
 }
 
 @code {
     [Parameter] public int TemplateId { get; set; }
     [Parameter] public string ResumeId { get; set; } = "";
-
     private Resume resume = new();
     private ResumeTemplate? selectedTemplate;
     private string activeTab = "Personal";
-
-    // UI State
     private bool isPreviewMode = false;
     private bool isSaving = false;
-    private bool isLoading = true; // Added loading state
+    private bool isLoading = true;
     private string lastSaveTime = "";
-    private bool showTitleModal = false;
-    private string tempResumeTitle = "";
 
     private void TogglePreview() => isPreviewMode = !isPreviewMode;
 
@@ -541,7 +540,6 @@ else
     public class VolunteerEntry { public string Organization { get; set; } = ""; public string Role { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string Description { get; set; } = ""; }
     public class ActivityEntry { public string Organization { get; set; } = ""; public string Role { get; set; } = ""; public string StartDate { get; set; } = ""; public string EndDate { get; set; } = ""; public string Description { get; set; } = ""; }
 
-    // Lists
     private List<EducationEntry> EducationList = new();
     private List<ExperienceEntry> ExperienceList = new();
     private List<ProjectEntry> ProjectList = new();
@@ -551,42 +549,19 @@ else
     private List<AcademicEntry> AcademicList = new();
     private List<VolunteerEntry> VolunteerList = new();
     private List<ActivityEntry> ActivityList = new();
-
     private string newTechSkill = "";
     private string newSoftSkill = "";
 
     protected override async Task OnInitializedAsync()
     {
-        isLoading = true; // Start loading
+        isLoading = true;
         await AuthService.InitializeAsync();
-
-        if (string.IsNullOrEmpty(AuthService.AuthToken))
-        {
-            Navigation.NavigateTo("/");
-            return;
-        }
-
+        if (string.IsNullOrEmpty(AuthService.AuthToken)) { Navigation.NavigateTo("/"); return; }
         var currentUserId = AuthService.CurrentUser?.Id;
         selectedTemplate = ResumeService.GetTemplate(TemplateId) ?? new ResumeTemplate { Name = "Modern Template", ColorScheme = "#2563EB" };
-
-        if (!string.IsNullOrEmpty(ResumeId))
-        {
-            var existingResume = await ResumeService.GetResume(ResumeId, currentUserId);
-            if (existingResume != null)
-            {
-                resume = existingResume;
-                DeserializeData();
-            }
-        }
-        else
-        {
-            resume.TemplateId = TemplateId;
-            resume.UserId = AuthService.CurrentUser?.Id ?? "rafay";
-            resume.Email = AuthService.CurrentUser?.Email ?? "";
-            resume.FullName = AuthService.CurrentUser?.Name ?? "";
-        }
-
-        isLoading = false; // Stop loading
+        if (!string.IsNullOrEmpty(ResumeId)) { var existingResume = await ResumeService.GetResume(ResumeId, currentUserId); if (existingResume != null) { resume = existingResume; DeserializeData(); } }
+        else { resume.TemplateId = TemplateId; resume.UserId = AuthService.CurrentUser?.Id ?? "rafay"; resume.Email = AuthService.CurrentUser?.Email ?? ""; resume.FullName = AuthService.CurrentUser?.Name ?? ""; }
+        isLoading = false;
     }
 
     private void DeserializeData()
@@ -618,61 +593,11 @@ else
     private async Task SaveResume(bool silent = false)
     {
         if (string.IsNullOrEmpty(resume.UserId)) return;
-
-        if (!silent)
-        {
-            // Show title modal on first manual save
-            if (string.IsNullOrEmpty(resume.Id) || resume.Title == "Untitled Resume")
-            {
-                showTitleModal = true;
-                tempResumeTitle = $"{AuthService.CurrentUser?.Name ?? "My"} Resume";
-                StateHasChanged();
-                return;
-            }
-            
-            isSaving = true;
-            StateHasChanged();
-        }
-
+        if (!silent) { isSaving = true; StateHasChanged(); }
         SerializeData();
         await ResumeService.SaveResume(resume);
-
         lastSaveTime = DateTime.Now.ToString("h:mm tt");
-
-        if (!silent)
-        {
-            isSaving = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task SaveWithTitle()
-    {
-        if (string.IsNullOrWhiteSpace(tempResumeTitle))
-        {
-            tempResumeTitle = $"{AuthService.CurrentUser?.Name ?? "My"} Resume";
-        }
-        
-        resume.Title = tempResumeTitle;
-        showTitleModal = false;
-        
-        isSaving = true;
-        StateHasChanged();
-
-        SerializeData();
-        await ResumeService.SaveResume(resume);
-
-        lastSaveTime = DateTime.Now.ToString("h:mm tt");
-        isSaving = false;
-        StateHasChanged();
-    }
-
-    private async Task HandleTitleKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            await SaveWithTitle();
-        }
+        if (!silent) { isSaving = false; StateHasChanged(); }
     }
 
     private async Task DownloadPDF()
@@ -680,6 +605,12 @@ else
         await SaveResume(silent: true);
         try
         {
+            var cleanExp = ExperienceList.Select(e => new ExperienceEntry { Company = e.Company, Position = e.Position, Location = e.Location, StartDate = e.StartDate, EndDate = e.EndDate, Description = StripHtml(e.Description!) }).ToList();
+            var cleanProj = ProjectList.Select(p => new ProjectEntry { Name = p.Name, Technologies = p.Technologies, Link = p.Link, Description = StripHtml(p.Description!) }).ToList();
+            var cleanAcad = AcademicList.Select(a => new AcademicEntry { Name = a.Name, Course = a.Course, Grade = a.Grade, Description = StripHtml(a.Description!) }).ToList();
+            var cleanVol = VolunteerList.Select(v => new VolunteerEntry { Organization = v.Organization, Role = v.Role, StartDate = v.StartDate, EndDate = v.EndDate, Description = StripHtml(v.Description!) }).ToList();
+            var cleanAct = ActivityList.Select(a => new ActivityEntry { Organization = a.Organization, Role = a.Role, StartDate = a.StartDate, EndDate = a.EndDate, Description = StripHtml(a.Description!) }).ToList();
+
             var pdfResume = new Resume
             {
                 Id = resume.Id,
@@ -693,64 +624,44 @@ else
                 Website = resume.Website,
                 Summary = StripHtml(resume.Summary!),
                 Education = JsonSerializer.Serialize(EducationList),
-                Experience = JsonSerializer.Serialize(GetCleanExperience()),
-                Projects = JsonSerializer.Serialize(GetCleanProjects()),
                 Certifications = JsonSerializer.Serialize(CertList),
                 Skills = string.Join(", ", TechSkillsList),
                 SoftSkills = string.Join(", ", SoftSkillsList),
-                Academic = JsonSerializer.Serialize(GetCleanAcademic()),
-                Volunteer = JsonSerializer.Serialize(GetCleanVolunteer()),
-                Activities = JsonSerializer.Serialize(GetCleanActivities())
+                Experience = JsonSerializer.Serialize(cleanExp),
+                Projects = JsonSerializer.Serialize(cleanProj),
+                Academic = JsonSerializer.Serialize(cleanAcad),
+                Volunteer = JsonSerializer.Serialize(cleanVol),
+                Activities = JsonSerializer.Serialize(cleanAct)
             };
-
-            var pdfBytes = await ResumeService.GeneratePDF(pdfResume, selectedTemplate);
+            var pdfBytes = ResumeService.GeneratePDF(pdfResume, selectedTemplate);
             var base64 = Convert.ToBase64String(pdfBytes);
             var fileName = $"{resume.FullName.Replace(" ", "_")}_Resume.pdf";
             await JSRuntime.InvokeVoidAsync("downloadFileFromBase64", fileName, "application/pdf", base64);
         }
-        catch (JsonException ex) { Console.WriteLine($"JSON Serialization Error: {ex.Message}"); }
         catch (Exception ex) { Console.WriteLine($"Error during PDF Download: {ex.Message}"); }
     }
 
-    private string StripHtml(string input)
-    {
-        if (string.IsNullOrEmpty(input)) return string.Empty;
-        var step1 = Regex.Replace(input, @"</p>|<br>|</li>", "\n");
-        var step2 = Regex.Replace(step1, "<.*?>", string.Empty);
-        return System.Net.WebUtility.HtmlDecode(step2).Trim();
-    }
+    private string StripHtml(string input) { if (string.IsNullOrEmpty(input)) return string.Empty; var step1 = Regex.Replace(input, @"</p>|<br>|</li>", "\n"); var step2 = Regex.Replace(step1, "<.*?>", string.Empty); return System.Net.WebUtility.HtmlDecode(step2).Trim(); }
+    private string GetTemplateContainerStyle() { if (selectedTemplate?.Id == 7 || selectedTemplate?.Id == 9) return "padding: 0; display: flex; flex-direction: row; min-height: 11in; align-items: stretch;"; if (selectedTemplate?.Id == 8) return "padding: 0; display: flex; flex-direction: column; min-height: 11in;"; return ""; }
 
-    private List<ExperienceEntry> GetCleanExperience() => ExperienceList.Select(e => new ExperienceEntry { Company = e.Company, Position = e.Position, Location = e.Location, StartDate = e.StartDate, EndDate = e.EndDate, Description = StripHtml(e.Description!) }).ToList();
-    private List<ProjectEntry> GetCleanProjects() => ProjectList.Select(p => new ProjectEntry { Name = p.Name, Technologies = p.Technologies, Link = p.Link, Description = StripHtml(p.Description!) }).ToList();
-    private List<AcademicEntry> GetCleanAcademic() => AcademicList.Select(a => new AcademicEntry { Name = a.Name, Course = a.Course, Grade = a.Grade, Description = StripHtml(a.Description!) }).ToList();
-    private List<VolunteerEntry> GetCleanVolunteer() => VolunteerList.Select(v => new VolunteerEntry { Organization = v.Organization, Role = v.Role, StartDate = v.StartDate, EndDate = v.EndDate, Description = StripHtml(v.Description!) }).ToList();
-    private List<ActivityEntry> GetCleanActivities() => ActivityList.Select(a => new ActivityEntry { Organization = a.Organization, Role = a.Role, StartDate = a.StartDate, EndDate = a.EndDate, Description = StripHtml(a.Description!) }).ToList();
-
-    private void AddEducationEntry() => EducationList.Add(new EducationEntry());
-    private void RemoveEducation(EducationEntry item) => EducationList.Remove(item);
-    private void AddExperienceEntry() => ExperienceList.Add(new ExperienceEntry());
-    private void RemoveExperience(ExperienceEntry item) => ExperienceList.Remove(item);
-    private void AddProjectEntry() => ProjectList.Add(new ProjectEntry());
-    private void RemoveProject(ProjectEntry item) => ProjectList.Remove(item);
-    private void AddCertEntry() => CertList.Add(new CertEntry());
-    private void RemoveCert(CertEntry item) => CertList.Remove(item);
-    private void AddAcademicEntry() => AcademicList.Add(new AcademicEntry());
-    private void RemoveAcademic(AcademicEntry item) => AcademicList.Remove(item);
-    private void AddVolunteerEntry() => VolunteerList.Add(new VolunteerEntry());
-    private void RemoveVolunteer(VolunteerEntry item) => VolunteerList.Remove(item);
-    private void AddActivityEntry() => ActivityList.Add(new ActivityEntry());
-    private void RemoveActivity(ActivityEntry item) => ActivityList.Remove(item);
-
+    // CRUD Operations
+    private void AddEducationEntry() => EducationList.Add(new EducationEntry()); private void RemoveEducation(EducationEntry item) => EducationList.Remove(item);
+    private void AddExperienceEntry() => ExperienceList.Add(new ExperienceEntry()); private void RemoveExperience(ExperienceEntry item) => ExperienceList.Remove(item);
+    private void AddProjectEntry() => ProjectList.Add(new ProjectEntry()); private void RemoveProject(ProjectEntry item) => ProjectList.Remove(item);
+    private void AddCertEntry() => CertList.Add(new CertEntry()); private void RemoveCert(CertEntry item) => CertList.Remove(item);
+    private void AddAcademicEntry() => AcademicList.Add(new AcademicEntry()); private void RemoveAcademic(AcademicEntry item) => AcademicList.Remove(item);
+    private void AddVolunteerEntry() => VolunteerList.Add(new VolunteerEntry()); private void RemoveVolunteer(VolunteerEntry item) => VolunteerList.Remove(item);
+    private void AddActivityEntry() => ActivityList.Add(new ActivityEntry()); private void RemoveActivity(ActivityEntry item) => ActivityList.Remove(item);
     private void AddTechSkill() { if (!string.IsNullOrWhiteSpace(newTechSkill)) { TechSkillsList.Add(newTechSkill.Trim()); newTechSkill = ""; } }
     private void RemoveTechSkill(string s) => TechSkillsList.Remove(s);
     private void AddSoftSkill() { if (!string.IsNullOrWhiteSpace(newSoftSkill)) { SoftSkillsList.Add(newSoftSkill.Trim()); newSoftSkill = ""; } }
     private void RemoveSoftSkill(string s) => SoftSkillsList.Remove(s);
     private void KeyUpSkill(KeyboardEventArgs e, string type) { if (e.Key == "Enter") { if (type == "Tech") AddTechSkill(); else AddSoftSkill(); } }
-
     private void GoBack() => Navigation.NavigateTo("/templates");
 }
 
 <style>
+    /* Styles kept consistent with previous version */
     :root {
         --primary-color: #2563EB;
         --bg-app: #f3f4f6;
@@ -771,7 +682,6 @@ else
         font-family: 'Inter', sans-serif;
     }
 
-    /* --- LOADER --- */
     .loader-wrapper {
         display: flex;
         flex-direction: column;
@@ -809,7 +719,6 @@ else
         color: var(--text-medium);
     }
 
-    /* --- EXISTING STYLES --- */
     .editor-top-header {
         background: #ffffff;
         border-bottom: 1px solid var(--border-color);
@@ -917,7 +826,6 @@ else
         justify-content: center;
     }
 
-    /* RESPONSIVE TOGGLE LOGIC */
     .preview-active .editor-left-panel {
         display: none !important;
     }
@@ -936,8 +844,7 @@ else
         .editor-right-panel {
             display: none;
         }
-        /* Default hide preview on mobile */
-        /* When preview active, hide left, show right */
+
         .preview-active .editor-left-panel {
             display: none !important;
         }
@@ -948,7 +855,6 @@ else
         }
     }
 
-    /* Common Styles */
     .tab-navigation-container {
         padding: 1.5rem;
         padding-bottom: 1rem;
@@ -1100,11 +1006,19 @@ else
         padding: 4px;
         border-radius: 4px;
         display: flex;
+        justify-content: center;
     }
 
         .btn-icon-delete:hover {
             background: #fee2e2;
         }
+
+    .full-width {
+        width: 100%;
+        border-top: 1px solid #e5e7eb;
+        border-radius: 0 0 12px 12px;
+        padding: 8px;
+    }
 
     .skill-input-group {
         display: flex;
@@ -1155,116 +1069,16 @@ else
             opacity: 1;
         }
 
-    .text-muted {
-        color: var(--text-light);
-        font-style: italic;
-    }
-
-    /* Resume Doc */
     .resume-document {
         width: 100%;
         max-width: 850px;
-        max-height: calc(100vh - 8rem);
         background: white;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        min-height: 11in;
         padding: 0.75in;
         color: #333;
-        overflow: auto;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        word-break: break-word;
     }
 
-    .resume-header {
-        padding-bottom: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .resume-name {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: #111827;
-        margin: 0 0 0.75rem 0;
-        letter-spacing: -0.03em;
-        line-height: 1;
-    }
-
-    .resume-contact-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1.25rem;
-        font-size: 0.95rem;
-        color: #4b5563;
-        margin-top: 0.5rem;
-    }
-
-    .contact-item {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        color: inherit;
-        text-decoration: none;
-    }
-
-        .contact-item svg {
-            color: inherit;
-            opacity: 0.8;
-        }
-
-    .resume-body {
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-    }
-
-    .section-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin: 0 0 1rem 0;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e5e7eb;
-    }
-
-    .section-content {
-        font-size: 1rem;
-        line-height: 1.6;
-        color: #374151;
-        margin: 0;
-    }
-
-    .preview-item {
-        margin-bottom: 1.25rem;
-    }
-
-        .preview-item:last-child {
-            margin-bottom: 0;
-        }
-
-    .preserve-formatting {
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        margin-top: 0.5rem;
-        line-height: 1.5;
-    }
-
-    .skills-pill-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .preview-skill-pill {
-        padding: 0.25rem 0.75rem;
-        border-radius: 4px;
-        font-size: 0.9rem;
-        font-weight: 500;
-        border: 1px solid transparent;
-        display: inline-block;
-    }
-
-    /* NEW STYLES FOR SAVE BUTTON AND STATUS */
     .save-status {
         margin-left: 1rem;
         font-size: 0.85rem;
@@ -1292,88 +1106,4 @@ else
             opacity: 0.7;
             cursor: not-allowed;
         }
-
-    /* Modal Styles */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        backdrop-filter: blur(2px);
-    }
-
-    .modal-content {
-        background: white;
-        border-radius: 12px;
-        padding: 2rem;
-        max-width: 500px;
-        width: 90%;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    }
-
-    .modal-content h3 {
-        margin: 0 0 0.5rem 0;
-        font-size: 1.5rem;
-        color: #111827;
-    }
-
-    .modal-content p {
-        margin: 0 0 1.5rem 0;
-        color: #6b7280;
-    }
-
-    .modal-input {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        font-size: 1rem;
-        margin-bottom: 1.5rem;
-        transition: border-color 0.2s;
-    }
-
-    .modal-input:focus {
-        outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .modal-actions {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-end;
-    }
-
-    .modal-btn {
-        padding: 0.625rem 1.25rem;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        border: none;
-    }
-
-    .modal-btn-cancel {
-        background: #f3f4f6;
-        color: #374151;
-    }
-
-    .modal-btn-cancel:hover {
-        background: #e5e7eb;
-    }
-
-    .modal-btn-save {
-        background: #3b82f6;
-        color: white;
-    }
-
-    .modal-btn-save:hover {
-        background: #2563eb;
-    }
 </style>

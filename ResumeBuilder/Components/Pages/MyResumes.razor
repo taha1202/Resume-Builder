@@ -226,7 +226,7 @@
                 Experience = JsonSerializer.Serialize(cleanExp), Projects = JsonSerializer.Serialize(cleanProj), Academic = JsonSerializer.Serialize(cleanAcad), Volunteer = JsonSerializer.Serialize(cleanVol), Activities = JsonSerializer.Serialize(cleanAct)
             };
 
-            var pdfBytes = await ResumeService.GeneratePDF(pdfResume, template);
+            var pdfBytes = ResumeService.GeneratePDF(pdfResume, template);
             var base64 = Convert.ToBase64String(pdfBytes);
             var safeName = (string.IsNullOrWhiteSpace(pdfResume.FullName) ? "Resume" : pdfResume.FullName).Replace(" ", "_");
             var fileName = $"{safeName}_Resume.pdf";
